@@ -3,7 +3,7 @@ import white from "@/assets/white.svg";
 import { Container } from "@mui/material";
 import Content from "./Content";
 import ImageSection from "./ImageSection";
-import { storyData } from "./storyData";
+import { storyData } from "./StoryData";
 
 import SEO from "../../components/common/SEO";
 
