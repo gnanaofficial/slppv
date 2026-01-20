@@ -1,0 +1,40 @@
+.research-map-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.map-title {
+  text-align: center;
+  font-family: "Playfair Display", serif;
+  color: #c2a661;
+  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: 400;
+}
+
+.info-window {
+  padding: 8px;
+  color: #333;
+}
+
+.info-window h3 {
+  color: #c2a661;
+  margin-bottom: 8px;
+}
+
+.map-button {
+  background-color: #c2a661;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.map-button:hover {
+  background-color: #a88c4e;
+}
