@@ -19,10 +19,16 @@ import ammavaru from "@/assets/Cover/ammavaruHeader.png";
 import HomeIcon from "@mui/icons-material/Home";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import bannerImg from "@/assets/banner.png";
+import LanguageToggle from "../LanguageToggle";
+import { useTranslation } from "react-i18next";
+import { useDonor } from "../../../context/DonorContext";
+import PersonIcon from "@mui/icons-material/Person";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
+  const { donor, isAuthenticated, logout } = useDonor();
   const [isScrolled, setIsScrolled] = useState(false);
   const [openSevasMenu, setOpenSevasMenu] = useState(false);
   const [activeItem, setActiveItem] = useState(null);
@@ -45,12 +51,12 @@ const Navbar = () => {
   const sevasSubmenuGroups = [
     {
       items: [
-        { id: 1, text: "Daily Sevas", path: "/sevas/daily-sevas" },
-        { id: 2, text: "Weekly Sevas", path: "/sevas/weekly-sevas" },
-        { id: 3, text: "Monthly Sevas", path: "/sevas/monthly-sevas" },
+        { id: 1, text: t("sevas.daily"), path: "/sevas/daily-sevas" },
+        { id: 2, text: t("sevas.weekly"), path: "/sevas/weekly-sevas" },
+        { id: 3, text: t("sevas.monthly"), path: "/sevas/monthly-sevas" },
         {
           id: 4,
-          text: "Auspicious",
+          text: t("sevas.auspicious"),
           path: "/sevas/auspicious-sevas",
         },
       ],
@@ -67,38 +73,38 @@ const Navbar = () => {
     },
     {
       id: 2,
-      text: "About",
+      text: t("nav.about"),
       path: "/about",
       type: "page",
     },
     {
       id: 3,
-      text: "Sevas",
-      path: "/sevas", // Changed from '#sevas'
+      text: t("nav.sevas"),
+      path: "/sevas",
       type: "section",
       hasSubmenu: true,
     },
     {
       id: 4,
-      text: "Contact",
+      text: t("nav.contact"),
       path: "/contact",
       type: "page",
     },
     {
       id: 5,
-      text: "Trust",
+      text: t("nav.trust"),
       path: "/trust-details",
       type: "page",
     },
     {
       id: 6,
-      text: "Photo Gallery",
+      text: t("nav.gallery"),
       path: "/photo-gallery",
       type: "page",
     },
     {
       id: 7,
-      text: "Donate",
+      text: t("nav.donate"),
       path: "/donate",
       type: "page",
     },
@@ -114,10 +120,8 @@ const Navbar = () => {
     setActiveItem(item.id);
 
     if (item.hasSubmenu) {
-      // If the item has a submenu, toggle the submenu
       setOpenSevasMenu(!openSevasMenu);
     } else {
-      // For regular navigation
       navigate(item.path);
     }
   };
@@ -150,7 +154,7 @@ const Navbar = () => {
 
   useEffect(() => {
     if (location.pathname === "/") {
-      setActiveItem(1); // Home
+      setActiveItem(1);
     } else {
       let matchFound = false;
 
@@ -183,21 +187,72 @@ const Navbar = () => {
 
   return (
     <div className="mt-3 mb-4 md:mt-6 md:mb-6">
-      {/* <Box
-        sx={{
-          backgroundImage: `url(${bannerImg})`,
-          backgroundSize: "contain",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          py: 1,
-          px: { xs: 2, md: 5 },
-          height: { xs: 120, sm: 120, md: 120, lg: 150 },
-        }}
-      ></Box> */}
       <img
         src={bannerImg}
         className="flex justify-center items-center mx-auto 3xl:scale-90"
       />
+
+      {/* Language Toggle and Donor Login */}
+      <div className="flex justify-end items-center gap-3 px-4 md:px-8 py-2">
+        {isAuthenticated ? (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => navigate("/donor/dashboard")}
+              startIcon={<PersonIcon />}
+              sx={{
+                color: "#8B0000",
+                bgcolor: "#FAAC2F",
+                fontSize: { xs: "11px", sm: "13px" },
+                padding: { xs: "4px 12px", sm: "6px 16px" },
+                textTransform: "none",
+                fontWeight: "bold",
+                borderRadius: "20px",
+                "&:hover": {
+                  bgcolor: "#E09B28",
+                },
+              }}
+            >
+              {donor?.name || t("donor.myAccount", "My Account")}
+            </Button>
+            <Button
+              onClick={logout}
+              sx={{
+                color: "#8B0000",
+                fontSize: { xs: "11px", sm: "13px" },
+                padding: { xs: "4px 12px", sm: "6px 16px" },
+                textTransform: "none",
+                border: "1px solid #8B0000",
+                borderRadius: "20px",
+                "&:hover": {
+                  bgcolor: "rgba(139, 0, 0, 0.1)",
+                },
+              }}
+            >
+              {t("common.logout", "Logout")}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={() => navigate("/donor/login")}
+            startIcon={<PersonIcon />}
+            sx={{
+              color: "#8B0000",
+              bgcolor: "#FAAC2F",
+              fontSize: { xs: "11px", sm: "13px" },
+              padding: { xs: "4px 12px", sm: "6px 16px" },
+              textTransform: "none",
+              fontWeight: "bold",
+              borderRadius: "20px",
+              "&:hover": {
+                bgcolor: "#E09B28",
+              },
+            }}
+          >
+            {t("donor.login", "Donor Login")}
+          </Button>
+        )}
+        <LanguageToggle />
+      </div>
 
       <AppBar
         position="static"

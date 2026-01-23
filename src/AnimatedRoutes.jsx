@@ -23,11 +23,27 @@ const Trust = lazy(() => import("./pages/Trust/Trust"));
 
 const AdminLogin = lazy(() => import("./pages/Admin/AdminLogin"));
 const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
+const DashboardHome = lazy(() => import("./pages/Admin/DashboardHome"));
 const GalleryManager = lazy(() => import("./pages/Admin/GalleryManager"));
+const VideoManager = lazy(() => import("./pages/Admin/VideoManager"));
 const DonorManager = lazy(() => import("./pages/Admin/DonorManager"));
+const ManualDonationEntry = lazy(
+  () => import("./pages/Admin/ManualDonationEntry"),
+);
+const DonorHistory = lazy(() => import("./pages/Admin/DonorHistory"));
+const SubAdminManager = lazy(() => import("./pages/Admin/SubAdminManager"));
 const SevaManager = lazy(() => import("./pages/Admin/SevaManager"));
 const Setup = lazy(() => import("./pages/Admin/Setup"));
+const Seed = lazy(() => import("./pages/Admin/Seed"));
+const SiteContentManager = lazy(
+  () => import("./pages/Admin/SiteContentManager"),
+);
+const PaymentStatus = lazy(() => import("./pages/PaymentStatus/PaymentStatus"));
+const Debug = lazy(() => import("./pages/Admin/Debug"));
 const AdminRoute = lazy(() => import("./components/admin/AdminRoute"));
+
+const DonorLogin = lazy(() => import("./pages/Donor/DonorLogin"));
+const DonorDashboard = lazy(() => import("./pages/Donor/DonorDashboard"));
 
 const Layout = ({ children }) => {
   return (
@@ -135,24 +151,51 @@ const AnimatedRoutes = () => {
               </Layout>
             }
           />
+          <Route
+            path="/payment/status"
+            element={
+              <Layout>
+                <PaymentStatus />
+              </Layout>
+            }
+          />
+
+          {/* Donor Routes */}
+          <Route
+            path="/donor/login"
+            element={
+              <Layout>
+                <DonorLogin />
+              </Layout>
+            }
+          />
+          <Route
+            path="/donor/dashboard"
+            element={
+              <Layout>
+                <DonorDashboard />
+              </Layout>
+            }
+          />
 
           {/* Admin Routes - No animations to avoid conflicts with Sidebar */}
           <Route path="/admin/setup" element={<Setup />} />
-          <Route path="/admin-slppv" element={<AdminLogin />} />
-          <Route path="/admin-slppv" element={<AdminLogin />} />
-          <Route path="/admin/setup" element={<Setup />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<Dashboard />}>
-            <Route
-              index
-              element={
-                <h2 className="text-2xl font-bold">
-                  Welcome to Admin Dashboard
-                </h2>
-              }
-            />
+            <Route index element={<DashboardHome />} />
             <Route path="gallery" element={<GalleryManager />} />
+            <Route path="videos" element={<VideoManager />} />
             <Route path="donors" element={<DonorManager />} />
+            <Route
+              path="donors/manual-entry"
+              element={<ManualDonationEntry />}
+            />
+            <Route path="donors/history" element={<DonorHistory />} />
+            <Route path="sub-admins" element={<SubAdminManager />} />
             <Route path="sevas" element={<SevaManager />} />
+            <Route path="seed-data" element={<Seed />} />
+            <Route path="site-content" element={<SiteContentManager />} />
+            <Route path="debug" element={<Debug />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

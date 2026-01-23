@@ -178,14 +178,14 @@ const Footer = () => {
             <span>All Rights Reserved.</span>
           </p>
           <p className="text-xs mt-2">
-            Designed & Developed with by{" "}
+            Designed & Developed by{" "}
             <a
-              href="https://www.webortex.com"
+              href="#"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primaryColor underline hover:text-white/80 transition-all duration-200"
             >
-              Webortex
+              Zervitra
             </a>
           </p>
         </div>

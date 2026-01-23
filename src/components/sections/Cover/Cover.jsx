@@ -1,19 +1,45 @@
 import React, { useState, useEffect } from "react";
 import vectorImg from "@/assets/Vector.png";
 import { assets } from "@/assets/assets";
+import { getSiteContent } from "@/lib/firestoreService";
 
+// Default images as fallback
 import Img1 from "@/assets/Cover/img1.png";
 import Img2 from "@/assets/Cover/img2.png";
 import Img3 from "@/assets/Cover/img3.png";
 import Img4 from "@/assets/Cover/img4.png";
 
 const Cover = () => {
-  const carouselImages = [Img1, Img2, Img3, Img4];
-
+  const [carouselImages, setCarouselImages] = useState([
+    Img1,
+    Img2,
+    Img3,
+    Img4,
+  ]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
+    const fetchDynamicImages = async () => {
+      try {
+        const heroDoc = await getSiteContent("hero");
+        if (heroDoc && heroDoc.images && heroDoc.images.length > 0) {
+          // Extract URLs from image objects
+          const dynamicUrls = heroDoc.images.map((img) => img.url);
+          setCarouselImages(dynamicUrls);
+        }
+      } catch (error) {
+        console.error("Error fetching dynamic cover images:", error);
+      }
+    };
+
+    fetchDynamicImages();
+  }, []);
+
+  useEffect(() => {
+    // Only start interval if we have images
+    if (carouselImages.length <= 1) return;
+
     const transitionDuration = 1000;
     const displayDuration = 3000;
 

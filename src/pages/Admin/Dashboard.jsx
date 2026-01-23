@@ -38,16 +38,46 @@ const Dashboard = () => {
             Manage Gallery
           </Link>
           <Link
+            to="/admin/videos"
+            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-[#8B0000] hover:text-white"
+          >
+            Manage Videos
+          </Link>
+          <Link
             to="/admin/donors"
             className="block py-2.5 px-4 rounded transition duration-200 hover:bg-[#8B0000] hover:text-white"
           >
             Manage Donors
           </Link>
           <Link
+            to="/admin/donors/manual-entry"
+            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-[#8B0000] hover:text-white pl-8"
+          >
+            ↳ Manual Entry
+          </Link>
+          <Link
+            to="/admin/donors/history"
+            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-[#8B0000] hover:text-white pl-8"
+          >
+            ↳ Donor History
+          </Link>
+          <Link
             to="/admin/sevas"
             className="block py-2.5 px-4 rounded transition duration-200 hover:bg-[#8B0000] hover:text-white"
           >
             Manage Sevas
+          </Link>
+          <Link
+            to="/admin/sub-admins"
+            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-[#8B0000] hover:text-white"
+          >
+            Sub-Admins
+          </Link>
+          <Link
+            to="/admin/site-content"
+            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-[#8B0000] hover:text-white"
+          >
+            Site Content
           </Link>
         </nav>
         <div className="px-4 mt-auto">

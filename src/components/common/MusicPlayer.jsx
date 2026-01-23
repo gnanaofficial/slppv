@@ -10,14 +10,21 @@ const MusicPlayer = ({ shouldPlay }) => {
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
-    audioRef.current.loop = true;
-    audioRef.current.volume = 0.5;
+    const audio = audioRef.current;
+    audio.loop = true;
+    audio.volume = 0.5;
+
+    // Check if music was muted before (from localStorage)
+    const wasMuted = localStorage.getItem("musicMuted") === "true";
+    setIsMuted(wasMuted);
+    audio.muted = wasMuted;
 
     const attemptPlay = () => {
-      audioRef.current
+      audio
         .play()
         .then(() => {
           setIsPlaying(true);
+          localStorage.setItem("musicPlaying", "true");
           // Remove listener once successful
           document.removeEventListener("click", attemptPlay);
         })
@@ -27,11 +34,12 @@ const MusicPlayer = ({ shouldPlay }) => {
     };
 
     if (shouldPlay) {
-      const playPromise = audioRef.current.play();
+      const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             setIsPlaying(true);
+            localStorage.setItem("musicPlaying", "true");
           })
           .catch((error) => {
             console.log(
@@ -46,23 +54,16 @@ const MusicPlayer = ({ shouldPlay }) => {
     }
 
     return () => {
-      audioRef.current.pause();
+      audio.pause();
       document.removeEventListener("click", attemptPlay);
     };
   }, [shouldPlay]);
 
-  const togglePlay = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
   const toggleMute = () => {
-    audioRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
+    const newMutedState = !isMuted;
+    audioRef.current.muted = newMutedState;
+    setIsMuted(newMutedState);
+    localStorage.setItem("musicMuted", newMutedState.toString());
   };
 
   if (!shouldPlay) return null;
