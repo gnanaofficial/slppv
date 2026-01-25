@@ -17,7 +17,6 @@ import { generateDonorId } from "../../lib/donorService";
 
 const Donate = () => {
   const { t } = useTranslation();
-  const [showBankDetails, setShowBankDetails] = useState(false);
   const [formData, setFormData] = useState({
     amount: "",
     purpose: "general",
@@ -145,149 +144,133 @@ const Donate = () => {
           </div>
         </div>
 
-        {/* Donation Form */}
-        <div className="my-8 max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold text-mainColor text-center mb-6 font-phudu">
-            Donate Online via SBI ePay
-          </h2>
+        {/* Responsive Grid Layout - Form and Bank Details */}
+        <div className="my-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Donation Form */}
+          <div>
+            <h2 className="text-3xl font-bold text-mainColor text-center mb-6 font-phudu">
+              Donate Online via SBI ePay
+            </h2>
 
-          <form onSubmit={handleDonate} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                {error}
+            <form onSubmit={handleDonate} className="space-y-6">
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Amount (₹) *
+                </label>
+                <input
+                  type="number"
+                  name="amount"
+                  value={formData.amount}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  placeholder="Enter amount"
+                  min="1"
+                  required
+                />
               </div>
-            )}
 
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Amount (₹) *
-              </label>
-              <input
-                type="number"
-                name="amount"
-                value={formData.amount}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
-                placeholder="Enter amount"
-                min="1"
-                required
-              />
-            </div>
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Purpose *
+                </label>
+                <select
+                  name="purpose"
+                  value={formData.purpose}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  required
+                >
+                  <option value="general">General Donation</option>
+                  <option value="building_fund">Building Fund</option>
+                  <option value="seva_donation">Seva Donation</option>
+                  <option value="annadanam">Annadanam</option>
+                  <option value="gopuja">Go Puja</option>
+                  <option value="nitya_kainkaryam">Nitya Kainkaryam</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Purpose *
-              </label>
-              <select
-                name="purpose"
-                value={formData.purpose}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
-                required
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  placeholder="your.email@example.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-semibold mb-2">
+                  Mobile Number *
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  placeholder="10-digit mobile number"
+                  pattern="[0-9]{10}"
+                  maxLength="10"
+                  required
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> You will be redirected to SBI ePay secure
+                  payment gateway to complete your donation.
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={processing}
+                className={`w-full py-4 px-6 rounded-lg text-white font-bold text-lg ${processing
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-mainColor hover:bg-red-700"
+                  } transition shadow-lg`}
               >
-                <option value="general">General Donation</option>
-                <option value="building_fund">Building Fund</option>
-                <option value="seva_donation">Seva Donation</option>
-                <option value="annadanam">Annadanam</option>
-                <option value="gopuja">Go Puja</option>
-                <option value="nitya_kainkaryam">Nitya Kainkaryam</option>
-              </select>
-            </div>
+                {processing
+                  ? "Redirecting to SBI ePay..."
+                  : `Proceed to Pay ₹${formData.amount || "0"}`}
+              </button>
+            </form>
+          </div>
 
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
-                placeholder="Your full name"
-                required
-              />
-            </div>
+          {/* Bank Details - Always Visible */}
+          <div>
+            <h2 className="text-3xl font-bold text-mainColor text-center mb-6 font-phudu">
+              Other Payment Methods
+            </h2>
 
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Email *
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
-                placeholder="your.email@example.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">
-                Mobile Number *
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
-                placeholder="10-digit mobile number"
-                pattern="[0-9]{10}"
-                maxLength="10"
-                required
-              />
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> You will be redirected to SBI ePay secure
-                payment gateway to complete your donation.
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={processing}
-              className={`w-full py-4 px-6 rounded-lg text-white font-bold text-lg ${
-                processing
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-mainColor hover:bg-red-700"
-              } transition shadow-lg`}
-            >
-              {processing
-                ? "Redirecting to SBI ePay..."
-                : `Proceed to Pay ₹${formData.amount || "0"}`}
-            </button>
-          </form>
-        </div>
-
-        {/* Bank Details - Collapsible */}
-        <div className="my-8 max-w-2xl mx-auto">
-          <button
-            onClick={() => setShowBankDetails(!showBankDetails)}
-            className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-gray-700 flex items-center justify-between transition"
-          >
-            <span>Other Payment Methods (Bank Transfer / UPI)</span>
-            <svg
-              className={`w-5 h-5 transform transition ${showBankDetails ? "rotate-180" : ""}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-
-          {showBankDetails && (
-            <div className="mt-4 p-6 bg-gray-50 rounded-lg border-2 border-gray-200">
+            <div className="p-6 bg-gray-50 rounded-lg border-2 border-gray-200 h-fit">
               <h3 className="text-xl font-bold text-mainColor mb-4">
                 Bank Account Details
               </h3>
@@ -339,7 +322,7 @@ const Donate = () => {
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </Container>
     </div>

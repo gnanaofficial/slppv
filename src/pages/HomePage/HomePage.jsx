@@ -18,7 +18,7 @@ const HomePage = () => {
       />
       <EventPopup />
       <Cover />
-      <div className="flex flex-col items-center w-full">
+      <div className="flex flex-col items-center w-full gap-16">
         <Reveal width="100%">
           <Seva />
         </Reveal>
