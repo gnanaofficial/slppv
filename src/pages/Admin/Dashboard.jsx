@@ -21,6 +21,7 @@ import {
   MdWeb,
   MdEmail,
   MdAttachMoney,
+  MdImage,
 } from "react-icons/md";
 
 const Dashboard = () => {
@@ -189,8 +190,24 @@ const Dashboard = () => {
             isOpen={openDropdowns.content}
             onToggle={() => toggleDropdown("content")}
             isCollapsed={!isSidebarOpen}
-            isActive={isParentActive(["/admin/sevas", "/admin/site-content"])}
+            isActive={isParentActive(["/admin/hero-images", "/admin/gallery-images", "/admin/sevas", "/admin/site-content"])}
           >
+            <NavItem
+              to="/admin/hero-images"
+              icon={<MdImage />}
+              label="Hero Images"
+              isActive={isActive("/admin/hero-images")}
+              isCollapsed={!isSidebarOpen}
+              isSubItem
+            />
+            <NavItem
+              to="/admin/gallery-images"
+              icon={<MdPhotoLibrary />}
+              label="Gallery Images"
+              isActive={isActive("/admin/gallery-images")}
+              isCollapsed={!isSidebarOpen}
+              isSubItem
+            />
             <NavItem
               to="/admin/sevas"
               icon={<MdTempleHindu />}
@@ -300,8 +317,8 @@ const NavItem = ({ to, icon, label, isActive, isCollapsed, isSubItem = false }) 
     <Link
       to={to}
       className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${isActive
-          ? "bg-[#8B0000] text-white shadow-lg"
-          : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
+        ? "bg-[#8B0000] text-white shadow-lg"
+        : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
         } ${isSubItem ? "ml-4" : ""} ${isCollapsed ? "justify-center" : ""}`}
       title={isCollapsed ? label : ""}
     >
@@ -318,8 +335,8 @@ const DropdownMenu = ({ icon, label, isOpen, onToggle, isCollapsed, isActive, ch
       <button
         onClick={onToggle}
         className={`w-full flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${isActive
-            ? "bg-[#8B0000] bg-opacity-70 text-white"
-            : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
+          ? "bg-[#8B0000] bg-opacity-70 text-white"
+          : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
           } ${isCollapsed ? "justify-center" : "justify-between"}`}
         title={isCollapsed ? label : ""}
       >

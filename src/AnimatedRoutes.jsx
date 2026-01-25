@@ -44,6 +44,12 @@ const EmailConfigManager = lazy(
 const SiteSettingsManager = lazy(
   () => import("./pages/Admin/SiteSettingsManager"),
 );
+const HeroImagesManager = lazy(
+  () => import("./pages/Admin/HeroImagesManager"),
+);
+const GalleryImagesManager = lazy(
+  () => import("./pages/Admin/GalleryImagesManager"),
+);
 const PaymentStatus = lazy(() => import("./pages/PaymentStatus/PaymentStatus"));
 const Debug = lazy(() => import("./pages/Admin/Debug"));
 const AdminRoute = lazy(() => import("./components/admin/AdminRoute"));
@@ -187,9 +193,17 @@ const AnimatedRoutes = () => {
           {/* Admin Routes - No animations to avoid conflicts with Sidebar */}
           <Route path="/admin/setup" element={<Setup />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<Dashboard />}>
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Dashboard />
+              </AdminRoute>
+            }
+          >
             <Route index element={<DashboardHome />} />
             <Route path="gallery" element={<GalleryManager />} />
+            <Route path="gallery-images" element={<GalleryImagesManager />} />
             <Route path="videos" element={<VideoManager />} />
             <Route path="donors" element={<DonorManager />} />
             <Route
@@ -198,6 +212,7 @@ const AnimatedRoutes = () => {
             />
             <Route path="donors/history" element={<DonorHistory />} />
             <Route path="sub-admins" element={<SubAdminManager />} />
+            <Route path="hero-images" element={<HeroImagesManager />} />
             <Route path="sevas" element={<SevaManager />} />
             <Route path="seed-data" element={<Seed />} />
             <Route path="site-content" element={<SiteContentManager />} />

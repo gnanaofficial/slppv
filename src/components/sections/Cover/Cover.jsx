@@ -2,12 +2,40 @@ import React, { useState, useEffect } from "react";
 import vectorImg from "@/assets/Vector.png";
 import { assets } from "@/assets/assets";
 import { getSiteContent } from "@/lib/firestoreService";
+import { getSiteSettings } from "@/lib/configService";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Cover = () => {
   const [carouselImages, setCarouselImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [posterImage, setPosterImage] = useState(assets.poster); // Left side image
+  const [isLoadingPoster, setIsLoadingPoster] = useState(true);
 
+  // Fetch left poster image from site settings
+  useEffect(() => {
+    const fetchPosterImage = async () => {
+      try {
+        setIsLoadingPoster(true);
+        const settings = await getSiteSettings();
+
+        if (settings && settings.heroPosterImage) {
+          setPosterImage(settings.heroPosterImage);
+        } else {
+          // Use default if not configured
+          setPosterImage(assets.poster);
+        }
+      } catch (error) {
+        console.error("Error fetching poster image:", error);
+        setPosterImage(assets.poster);
+      } finally {
+        setIsLoadingPoster(false);
+      }
+    };
+
+    fetchPosterImage();
+  }, []);
+
+  // Fetch right carousel images (existing logic)
   useEffect(() => {
     const fetchDynamicImages = async () => {
       try {
@@ -48,11 +76,22 @@ const Cover = () => {
           id="home"
           className="w-full flex  md:flex-row items-center justify-evenly align-center my-auto gap-y-6 md:gap-2"
         >
-          <img
-            className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl"
-            src={assets.poster}
-            alt=""
-          />
+          {/* LEFT SIDE - Static Poster (now dynamic from admin) */}
+          <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl bg-gray-100">
+            {isLoadingPoster ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mainColor"></div>
+              </div>
+            ) : (
+              <img
+                className="w-full h-full object-cover"
+                src={posterImage}
+                alt="Temple Poster"
+              />
+            )}
+          </div>
+
+          {/* RIGHT SIDE - Carousel (existing, working fine) */}
           <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl bg-gray-100">
             <AnimatePresence>
               {carouselImages.length > 0 ? (

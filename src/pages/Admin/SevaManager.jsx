@@ -1,476 +1,436 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../../lib/firebase";
+import { MdAdd, MdEdit, MdDelete, MdSave, MdCancel } from "react-icons/md";
+import { FaOm } from "react-icons/fa";
 import {
-  collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import { useForm, useFieldArray } from "react-hook-form";
+  getAllSevas,
+  addSeva,
+  updateSeva,
+  deleteSeva,
+} from "../../lib/contentService";
+import { uploadImage, deleteImage as deleteStorageImage } from "../../lib/uploadService";
 
 const SevaManager = () => {
   const [sevas, setSevas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { register, handleSubmit, reset, control, watch, setValue } = useForm({
-    defaultValues: {
-      nameEn: "",
-      nameTe: "",
-      descriptionEn: "",
-      descriptionTe: "",
-      type: "daily",
-      dayOfWeek: 0,
-      date: "",
-      timings: [""],
-      price: 0,
-      active: true,
-      order: 0,
-    },
-  });
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "timings",
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const sevaType = watch("type");
-
-  const fetchSevas = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "sevas"));
-      const sevasData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setSevas(sevasData.sort((a, b) => (a.order || 0) - (b.order || 0)));
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching sevas: ", error);
-      setLoading(false);
-    }
-  };
+  const [formData, setFormData] = useState({
+    name: "",
+    nameTelugu: "",
+    description: "",
+    descriptionTelugu: "",
+    price: "",
+    imageUrl: "",
+    category: "daily",
+    enabled: true,
+  });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
-    fetchSevas();
+    loadSevas();
   }, []);
 
-  const onSubmit = async (data) => {
+  const loadSevas = async () => {
     try {
-      // Transform data to match Firestore schema
-      const sevaData = {
-        name: {
-          en: data.nameEn,
-          te: data.nameTe,
-        },
-        description: {
-          en: data.descriptionEn,
-          te: data.descriptionTe,
-        },
-        type: data.type,
-        timings: data.timings.filter((t) => t.trim() !== ""),
-        price: parseFloat(data.price) || 0,
-        active: data.active,
-        order: parseInt(data.order) || 0,
-        updatedAt: new Date(),
-      };
-
-      // Add type-specific fields
-      if (data.type === "weekly") {
-        sevaData.dayOfWeek = parseInt(data.dayOfWeek);
-      } else if (data.type === "monthly" || data.type === "auspicious") {
-        sevaData.date = data.date;
-      }
-
-      if (editingId) {
-        await updateDoc(doc(db, "sevas", editingId), sevaData);
-        setEditingId(null);
-      } else {
-        sevaData.createdAt = new Date();
-        await addDoc(collection(db, "sevas"), sevaData);
-      }
-
-      reset({
-        nameEn: "",
-        nameTe: "",
-        descriptionEn: "",
-        descriptionTe: "",
-        type: "daily",
-        dayOfWeek: 0,
-        date: "",
-        timings: [""],
-        price: 0,
-        active: true,
-        order: 0,
-      });
-      fetchSevas();
+      setIsLoading(true);
+      const data = await getAllSevas();
+      setSevas(data);
     } catch (error) {
-      console.error("Error saving seva: ", error);
-      alert("Error saving: " + error.message);
+      console.error("Error loading sevas:", error);
+      alert("Failed to load sevas");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this Seva?")) {
-      try {
-        await deleteDoc(doc(db, "sevas", id));
-        fetchSevas();
-      } catch (error) {
-        console.error("Error deleting seva: ", error);
-      }
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      nameTelugu: "",
+      description: "",
+      descriptionTelugu: "",
+      price: "",
+      imageUrl: "",
+      category: "daily",
+      enabled: true,
+    });
+    setIsAdding(false);
+    setEditingId(null);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      const imageUrl = await uploadImage(file, "sevas");
+      setFormData({ ...formData, imageUrl });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert(`Failed to upload image: ${error.message}`);
+    } finally {
+      setUploadingImage(false);
     }
+  };
+
+  const handleAdd = () => {
+    resetForm();
+    setIsAdding(true);
   };
 
   const handleEdit = (seva) => {
-    setEditingId(seva.id);
-    reset({
-      nameEn: seva.name?.en || "",
-      nameTe: seva.name?.te || "",
-      descriptionEn: seva.description?.en || "",
-      descriptionTe: seva.description?.te || "",
-      type: seva.type || "daily",
-      dayOfWeek: seva.dayOfWeek || 0,
-      date: seva.date || "",
-      timings: seva.timings?.length > 0 ? seva.timings : [""],
-      price: seva.price || 0,
-      active: seva.active !== undefined ? seva.active : true,
-      order: seva.order || 0,
+    setFormData({
+      name: seva.name,
+      nameTelugu: seva.nameTelugu || "",
+      description: seva.description,
+      descriptionTelugu: seva.descriptionTelugu || "",
+      price: seva.price.toString(),
+      imageUrl: seva.imageUrl || "",
+      category: seva.category || "daily",
+      enabled: seva.enabled,
     });
-    // Scroll to form
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setEditingId(seva.id);
   };
 
-  const getDayName = (dayNum) => {
-    const days = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
-    return days[dayNum] || "";
+  const handleSave = async () => {
+    // Validation
+    if (!formData.name || !formData.description || !formData.price) {
+      alert("Please fill in all required fields (Name, Description, Price)");
+      return;
+    }
+
+    try {
+      const sevaData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        order: editingId ? undefined : sevas.length,
+      };
+
+      if (editingId) {
+        await updateSeva(editingId, sevaData);
+      } else {
+        await addSeva(sevaData);
+      }
+
+      await loadSevas();
+      resetForm();
+      alert(`✅ Seva ${editingId ? "updated" : "added"} successfully!`);
+    } catch (error) {
+      console.error("Error saving seva:", error);
+      alert("Failed to save seva");
+    }
   };
 
-  const getSevaTypeLabel = (type) => {
-    const labels = {
-      daily: "Daily",
-      weekly: "Weekly",
-      monthly: "Monthly",
-      auspicious: "Auspicious",
-    };
-    return labels[type] || type;
+  const handleDelete = async (seva) => {
+    if (!confirm(`Delete "${seva.name}"?\n\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      if (seva.imageUrl) {
+        await deleteStorageImage(seva.imageUrl);
+      }
+      await deleteSeva(seva.id);
+      await loadSevas();
+      alert("✅ Seva deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting seva:", error);
+      alert("Failed to delete seva");
+    }
   };
 
-  if (loading) return <div className="p-4">Loading Sevas...</div>;
+  const handleToggleEnabled = async (seva) => {
+    try {
+      await updateSeva(seva.id, { enabled: !seva.enabled });
+      await loadSevas();
+    } catch (error) {
+      console.error("Error toggling seva:", error);
+      alert("Failed to update seva status");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mainColor"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Manage Sevas</h2>
+    <div className="max-w-6xl">
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <FaOm className="text-3xl text-mainColor" />
+            <h1 className="text-2xl font-bold text-mainColor">Seva Manager</h1>
+          </div>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="mb-8 bg-white p-6 rounded-lg shadow-lg border border-gray-200"
-      >
-        <h3 className="text-xl font-semibold mb-4 text-gray-700">
-          {editingId ? "Edit Seva" : "Add New Seva"}
-        </h3>
-
-        {/* Bilingual Name Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name (English) *
-            </label>
-            <input
-              {...register("nameEn", { required: true })}
-              placeholder="e.g., Suprabhata Seva"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Name (Telugu) *
-            </label>
-            <input
-              {...register("nameTe", { required: true })}
-              placeholder="e.g., సుప్రభాత సేవ"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {/* Bilingual Description Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description (English) *
-            </label>
-            <textarea
-              {...register("descriptionEn", { required: true })}
-              placeholder="Description in English"
-              rows="3"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description (Telugu) *
-            </label>
-            <textarea
-              {...register("descriptionTe", { required: true })}
-              placeholder="Description in Telugu"
-              rows="3"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {/* Seva Type, Price, Order, Active */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Seva Type *
-            </label>
-            <select
-              {...register("type", { required: true })}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="auspicious">Auspicious</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price (₹)
-            </label>
-            <input
-              {...register("price")}
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="500"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Display Order
-            </label>
-            <input
-              {...register("order")}
-              type="number"
-              min="0"
-              placeholder="0"
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div className="flex items-end">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                {...register("active")}
-                type="checkbox"
-                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-              />
-              <span className="text-sm font-medium text-gray-700">Active</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Conditional Fields Based on Type */}
-        {sevaType === "weekly" && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Day of Week *
-            </label>
-            <select
-              {...register("dayOfWeek", { required: sevaType === "weekly" })}
-              className="w-full md:w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="0">Sunday</option>
-              <option value="1">Monday</option>
-              <option value="2">Tuesday</option>
-              <option value="3">Wednesday</option>
-              <option value="4">Thursday</option>
-              <option value="5">Friday</option>
-              <option value="6">Saturday</option>
-            </select>
-          </div>
-        )}
-
-        {(sevaType === "monthly" || sevaType === "auspicious") && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date {sevaType === "monthly" ? "(DD-MM format)" : "*"}
-            </label>
-            <input
-              {...register("date", {
-                required: sevaType === "monthly" || sevaType === "auspicious",
-              })}
-              type="text"
-              placeholder={
-                sevaType === "monthly" ? "e.g., 15-01" : "e.g., 2024-01-15"
-              }
-              className="w-full md:w-1/2 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        )}
-
-        {/* Timings Management */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Timings
-          </label>
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-2 mb-2">
-              <input
-                {...register(`timings.${index}`)}
-                placeholder="e.g., 06:00 AM"
-                className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              {fields.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => append("")}
-            className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
-          >
-            + Add Timing
-          </button>
-        </div>
-
-        {/* Submit Buttons */}
-        <div className="flex gap-2 mt-6">
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            {editingId ? "Update Seva" : "Add Seva"}
-          </button>
-          {editingId && (
+          {!isAdding && !editingId && (
             <button
-              type="button"
-              onClick={() => {
-                setEditingId(null);
-                reset({
-                  nameEn: "",
-                  nameTe: "",
-                  descriptionEn: "",
-                  descriptionTe: "",
-                  type: "daily",
-                  dayOfWeek: 0,
-                  date: "",
-                  timings: [""],
-                  price: 0,
-                  active: true,
-                  order: 0,
-                });
-              }}
-              className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition font-medium"
+              onClick={handleAdd}
+              className="px-6 py-3 bg-mainColor text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 font-semibold shadow-lg"
             >
-              Cancel
+              <MdAdd className="text-xl" />
+              Add New Seva
             </button>
           )}
         </div>
-      </form>
 
-      {/* Sevas List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sevas.map((seva) => (
-          <div
-            key={seva.id}
-            className={`bg-white p-5 rounded-lg shadow-md border-l-4 ${
-              seva.active ? "border-green-500" : "border-gray-400"
-            } hover:shadow-lg transition`}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="font-bold text-lg text-gray-800">
-                {seva.name?.en || "Unnamed Seva"}
-              </h3>
-              <span
-                className={`text-xs px-2 py-1 rounded ${
-                  seva.active
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {seva.active ? "Active" : "Inactive"}
-              </span>
+        <p className="text-gray-600 mb-6">
+          Manage sevas offered at the temple. Add bilingual descriptions and pricing.
+        </p>
+
+        {/* Add/Edit Form */}
+        {(isAdding || editingId) && (
+          <div className="mb-6 p-6 bg-gray-50 border border-gray-200 rounded-lg">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              {editingId ? "Edit Seva" : "Add New Seva"}
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Name (English) */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Seva Name (English) *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  placeholder="Abhishekam"
+                />
+              </div>
+
+              {/* Name (Telugu) */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Seva Name (Telugu)
+                </label>
+                <input
+                  type="text"
+                  value={formData.nameTelugu}
+                  onChange={(e) => setFormData({ ...formData, nameTelugu: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  placeholder="అభిషేకం"
+                />
+              </div>
+
+              {/* Description (English) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description (English) *
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  rows="3"
+                  placeholder="Special abhishekam for Lord Venkateswara..."
+                />
+              </div>
+
+              {/* Description (Telugu) */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description (Telugu)
+                </label>
+                <textarea
+                  value={formData.descriptionTelugu}
+                  onChange={(e) => setFormData({ ...formData, descriptionTelugu: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  rows="3"
+                  placeholder="వెంకటేశ్వర స్వామికి ప్రత్యేక అభిషేకం..."
+                />
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Price (₹) *
+                </label>
+                <input
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                  placeholder="500"
+                  min="0"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:ring-2 focus:ring-mainColor focus:outline-none"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="special">Special</option>
+                  <option value="festival">Festival</option>
+                </select>
+              </div>
+
+              {/* Image Upload */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Seva Image
+                </label>
+                <div className="flex items-center gap-4">
+                  <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+                    {uploadingImage ? "Uploading..." : "Choose Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploadingImage}
+                    />
+                  </label>
+                  {formData.imageUrl && (
+                    <img
+                      src={formData.imageUrl}
+                      alt="Preview"
+                      className="h-20 w-20 object-cover rounded-lg border-2 border-gray-300"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Enabled */}
+              <div className="md:col-span-2 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="enabled"
+                  checked={formData.enabled}
+                  onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                  className="w-5 h-5 text-mainColor focus:ring-mainColor rounded"
+                />
+                <label htmlFor="enabled" className="text-sm font-semibold text-gray-700">
+                  Enabled (visible to visitors)
+                </label>
+              </div>
             </div>
-            <p className="text-sm text-gray-500 mb-1">{seva.name?.te}</p>
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-              {seva.description?.en}
-            </p>
 
-            <div className="space-y-1 text-xs text-gray-500 mb-3">
-              <p>
-                <span className="font-semibold">Type:</span>{" "}
-                {getSevaTypeLabel(seva.type)}
-              </p>
-              {seva.type === "weekly" && (
-                <p>
-                  <span className="font-semibold">Day:</span>{" "}
-                  {getDayName(seva.dayOfWeek)}
-                </p>
-              )}
-              {(seva.type === "monthly" || seva.type === "auspicious") &&
-                seva.date && (
-                  <p>
-                    <span className="font-semibold">Date:</span> {seva.date}
-                  </p>
-                )}
-              {seva.timings && seva.timings.length > 0 && (
-                <p>
-                  <span className="font-semibold">Timings:</span>{" "}
-                  {seva.timings.join(", ")}
-                </p>
-              )}
-              {seva.price > 0 && (
-                <p>
-                  <span className="font-semibold">Price:</span> ₹{seva.price}
-                </p>
-              )}
-              <p>
-                <span className="font-semibold">Order:</span> {seva.order || 0}
-              </p>
-            </div>
-
-            <div className="flex gap-2">
+            {/* Form Actions */}
+            <div className="flex gap-3 mt-6">
               <button
-                onClick={() => handleEdit(seva)}
-                className="flex-1 bg-yellow-500 text-white px-3 py-2 rounded text-sm hover:bg-yellow-600 transition font-medium"
+                onClick={handleSave}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 font-semibold"
               >
-                Edit
+                <MdSave />
+                Save Seva
               </button>
               <button
-                onClick={() => handleDelete(seva.id)}
-                className="flex-1 bg-red-500 text-white px-3 py-2 rounded text-sm hover:bg-red-600 transition font-medium"
+                onClick={resetForm}
+                className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2 font-semibold"
               >
-                Delete
+                <MdCancel />
+                Cancel
               </button>
             </div>
           </div>
-        ))}
-      </div>
+        )}
 
-      {sevas.length === 0 && (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-500 text-lg">
-            No sevas found. Add your first seva above!
+        {/* Sevas List */}
+        {sevas.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <FaOm className="text-6xl text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 text-lg">No sevas yet</p>
+            <p className="text-gray-500 text-sm mt-2">Add your first seva to get started</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {sevas.map((seva) => (
+              <div
+                key={seva.id}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex gap-4">
+                  {/* Image */}
+                  {seva.imageUrl && (
+                    <div className="w-32 h-32 flex-shrink-0">
+                      <img
+                        src={seva.imageUrl}
+                        alt={seva.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg text-gray-800">{seva.name}</h3>
+                    {seva.nameTelugu && (
+                      <p className="text-gray-600 text-sm mb-2">{seva.nameTelugu}</p>
+                    )}
+                    <p className="text-gray-700 mb-2">{seva.description}</p>
+                    {seva.descriptionTelugu && (
+                      <p className="text-gray-600 text-sm mb-2">{seva.descriptionTelugu}</p>
+                    )}
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="font-semibold text-mainColor">₹{seva.price}</span>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+                        {seva.category}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${seva.enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                        }`}>
+                        {seva.enabled ? "Enabled" : "Disabled"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleEdit(seva)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
+                      <MdEdit />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleToggleEnabled(seva)}
+                      className={`px-4 py-2 rounded-lg transition-colors ${seva.enabled
+                          ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                          : "bg-green-600 hover:bg-green-700 text-white"
+                        }`}
+                    >
+                      {seva.enabled ? "Disable" : "Enable"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(seva)}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
+                      <MdDelete />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Info Box */}
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>💡 Tip:</strong> Sevas are displayed on the sevas page.
+            Only enabled sevas will be visible to visitors. Add bilingual content for better accessibility.
           </p>
         </div>
-      )}
+      </div>
     </div>
   );
 };

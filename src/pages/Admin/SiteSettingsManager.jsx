@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { MdSettings, MdSave, MdCheckCircle, MdMusicNote } from "react-icons/md";
+import { MdSettings, MdSave, MdCheckCircle, MdMusicNote, MdImage } from "react-icons/md";
 import { getSiteSettings, updateConfig } from "../../lib/configService";
+import { uploadImage } from "../../lib/uploadService";
 
 const SiteSettingsManager = () => {
     const [settings, setSettings] = useState({
@@ -12,11 +13,13 @@ const SiteSettingsManager = () => {
         musicEnabled: true,
         musicVolume: 0.5,
         musicUrl: "",
+        heroPosterImage: "", // Left side hero image
     });
 
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     // Load settings on mount
     useEffect(() => {
@@ -33,6 +36,23 @@ const SiteSettingsManager = () => {
             alert("Failed to load site settings");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            setIsUploadingImage(true);
+            const imageUrl = await uploadImage(file, "hero-poster");
+            setSettings({ ...settings, heroPosterImage: imageUrl });
+            alert("✅ Image uploaded successfully! Don't forget to save settings.");
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            alert(`❌ Failed to upload image: ${error.message}`);
+        } finally {
+            setIsUploadingImage(false);
         }
     };
 
@@ -78,6 +98,48 @@ const SiteSettingsManager = () => {
                 </p>
 
                 <div className="space-y-6">
+                    {/* Hero Poster Image */}
+                    <div className="border-b pb-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <MdImage className="text-2xl text-mainColor" />
+                            <h3 className="text-lg font-semibold text-gray-700">
+                                Hero Section - Left Poster Image
+                            </h3>
+                        </div>
+
+                        <p className="text-sm text-gray-600 mb-4">
+                            Upload the main deity image that appears on the left side of the homepage hero section.
+                        </p>
+
+                        <div className="flex items-start gap-4">
+                            <div className="flex-1">
+                                <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer inline-block">
+                                    {isUploadingImage ? "Uploading..." : "Choose Image"}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="hidden"
+                                        disabled={isUploadingImage}
+                                    />
+                                </label>
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Recommended size: 1080x1440px (3:4 aspect ratio)
+                                </p>
+                            </div>
+
+                            {settings.heroPosterImage && (
+                                <div className="w-32 h-40 flex-shrink-0">
+                                    <img
+                                        src={settings.heroPosterImage}
+                                        alt="Hero Poster Preview"
+                                        className="w-full h-full object-cover rounded-lg border-2 border-gray-300"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Site Name */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -232,10 +294,9 @@ const SiteSettingsManager = () => {
                 </div>
 
                 {/* Info Box */}
-                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800">
-                        <strong>Success!</strong> Settings are now stored in Firestore and will persist
-                        across sessions. Music player integration coming in Phase 3.
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                        <strong>💡 Tip:</strong> The hero poster image will appear on the left side of the homepage hero section. Upload a high-quality deity image for best results.
                     </p>
                 </div>
             </div>

@@ -230,6 +230,7 @@ export const getSiteSettings = async () => {
         musicEnabled: true,
         musicVolume: 0.5,
         musicUrl: "",
+        heroPosterImage: "", // Left side hero image
     };
 };
 
