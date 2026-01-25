@@ -31,6 +31,9 @@ const GalleryImagesManager = () => {
         enabled: true,
     });
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [bulkFiles, setBulkFiles] = useState([]);
+    const [bulkUploading, setBulkUploading] = useState(false);
+    const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
 
     useEffect(() => {
         loadImages();
@@ -69,6 +72,7 @@ const GalleryImagesManager = () => {
         });
         setIsAdding(false);
         setEditingId(null);
+        setBulkFiles([]);
     };
 
     const handleImageUpload = async (e) => {
@@ -84,6 +88,56 @@ const GalleryImagesManager = () => {
             alert(`Failed to upload image: ${error.message}`);
         } finally {
             setUploadingImage(false);
+        }
+    };
+
+    const handleBulkFilesChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 8) {
+            alert("Maximum 8 images allowed at once");
+            return;
+        }
+        setBulkFiles(files);
+    };
+
+    const handleBulkUpload = async () => {
+        if (bulkFiles.length === 0) {
+            alert("Please select images to upload");
+            return;
+        }
+
+        setBulkUploading(true);
+        setBulkProgress({ current: 0, total: bulkFiles.length });
+
+        try {
+            for (let i = 0; i < bulkFiles.length; i++) {
+                const file = bulkFiles[i];
+                setBulkProgress({ current: i + 1, total: bulkFiles.length });
+
+                // Upload image
+                const imageUrl = await uploadImage(file, "gallery");
+
+                // Save to Firestore
+                await addGalleryImage({
+                    imageUrl,
+                    caption: file.name.split(".")[0], // Use filename as caption
+                    captionTelugu: "",
+                    category: formData.category, // Use selected category for all
+                    enabled: true,
+                    order: images.length + i,
+                });
+            }
+
+            await loadImages();
+            alert(`✅ Successfully uploaded ${bulkFiles.length} images!`);
+            setBulkFiles([]);
+            setIsAdding(false);
+        } catch (error) {
+            console.error("Error in bulk upload:", error);
+            alert(`Failed to upload images: ${error.message}`);
+        } finally {
+            setBulkUploading(false);
+            setBulkProgress({ current: 0, total: 0 });
         }
     };
 
@@ -219,14 +273,89 @@ const GalleryImagesManager = () => {
                 {(isAdding || editingId) && (
                     <div className="mb-6 p-6 bg-gray-50 border border-gray-200 rounded-lg">
                         <h2 className="text-xl font-bold text-gray-800 mb-4">
-                            {editingId ? "Edit Image" : "Add New Image"}
+                            {editingId ? "Edit Image" : "Add New Image(s)"}
                         </h2>
 
+                        {/* Bulk Upload Section */}
+                        {!editingId && (
+                            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                    <MdAdd className="text-blue-600" />
+                                    Bulk Upload (1-8 images)
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Select Multiple Images *
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleBulkFilesChange}
+                                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:outline-none"
+                                            disabled={bulkUploading}
+                                        />
+                                        {bulkFiles.length > 0 && (
+                                            <p className="text-sm text-gray-600 mt-2">
+                                                {bulkFiles.length} file(s) selected
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                            Category for All *
+                                        </label>
+                                        <select
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:outline-none"
+                                            disabled={bulkUploading}
+                                        >
+                                            {CATEGORIES.map((cat) => (
+                                                <option key={cat.value} value={cat.value}>
+                                                    {cat.label} ({cat.labelTelugu})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {bulkUploading && (
+                                    <div className="mt-4">
+                                        <div className="w-full bg-gray-200 rounded-full h-4">
+                                            <div
+                                                className="bg-blue-600 h-4 rounded-full transition-all duration-300"
+                                                style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-2 text-center">
+                                            Uploading {bulkProgress.current} of {bulkProgress.total}...
+                                        </p>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handleBulkUpload}
+                                    disabled={bulkFiles.length === 0 || bulkUploading}
+                                    className={`mt-4 px-6 py-3 rounded-lg text-white font-semibold ${bulkFiles.length === 0 || bulkUploading
+                                            ? "bg-gray-400 cursor-not-allowed"
+                                            : "bg-blue-600 hover:bg-blue-700"
+                                        } transition-colors`}
+                                >
+                                    {bulkUploading ? "Uploading..." : `Upload ${bulkFiles.length || ""} Image(s)`}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Single Upload Section */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Image Upload */}
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Image *
+                                    Single Image Upload
                                 </label>
                                 <div className="flex items-center gap-4">
                                     <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
@@ -392,8 +521,8 @@ const GalleryImagesManager = () => {
                                         <button
                                             onClick={() => handleToggleEnabled(image)}
                                             className={`flex-1 px-3 py-2 rounded transition-colors text-sm ${image.enabled
-                                                    ? "bg-yellow-600 hover:bg-yellow-700 text-white"
-                                                    : "bg-green-600 hover:bg-green-700 text-white"
+                                                ? "bg-yellow-600 hover:bg-yellow-700 text-white"
+                                                : "bg-green-600 hover:bg-green-700 text-white"
                                                 }`}
                                         >
                                             {image.enabled ? "Disable" : "Enable"}

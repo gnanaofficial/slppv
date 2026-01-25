@@ -379,6 +379,7 @@ const Navbar = () => {
                             }}
                           />
                           <MenuItem
+                            onClick={() => handleSevasSubmenuItem("/sevas/booking")}
                             sx={{
                               py: 1,
                               px: 2,

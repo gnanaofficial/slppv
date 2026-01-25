@@ -14,7 +14,7 @@ const AdminRoute = ({ children }) => {
   }
 
   if (!currentUser) {
-    return <Navigate to="/admin/login" />;
+    return <Navigate to="/temple-management/login" />;
   }
 
   return children;

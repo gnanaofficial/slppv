@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useTranslation } from "react-i18next";
 import God from "@/assets/image_in_Seva.png";
+import DailySevas from "../../components/sections/Sevas/DailySevas";
 
 const Daily = () => {
   const { t, i18n } = useTranslation();
@@ -67,93 +68,7 @@ const Daily = () => {
           </div>
 
           {/* Content */}
-          {loading ? (
-            <div className="bg-white rounded-lg p-8">
-              <div className="animate-pulse space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-20 bg-gray-200 rounded"></div>
-                ))}
-              </div>
-              <p className="text-center text-gray-600 mt-4">
-                {t("common.loading", "Loading...")}
-              </p>
-            </div>
-          ) : error ? (
-            <div className="bg-white rounded-lg p-8 text-center">
-              <p className="text-red-600 mb-4">
-                {t("common.error", "Error loading sevas")}: {error}
-              </p>
-              <button
-                onClick={fetchDailySevas}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                {t("common.retry", "Retry")}
-              </button>
-            </div>
-          ) : sevas.length === 0 ? (
-            <div className="bg-white rounded-lg p-12 text-center">
-              <p className="text-gray-600 text-lg">
-                {t(
-                  "sevas.noDailySevas",
-                  "No daily sevas available at the moment.",
-                )}
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="divide-y divide-gray-200">
-                {sevas.map((seva, index) => (
-                  <div
-                    key={seva.id}
-                    className={`p-4 md:p-6 ${
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    } hover:bg-yellow-50 transition-colors`}
-                  >
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                      <div className="flex-1">
-                        <h3 className="text-lg md:text-xl font-bold text-[#8B0000] mb-1">
-                          {seva.name?.[currentLang] ||
-                            seva.name?.en ||
-                            "Unnamed Seva"}
-                        </h3>
-                        <p className="text-sm md:text-base text-gray-700">
-                          {seva.description?.[currentLang] ||
-                            seva.description?.en ||
-                            ""}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6">
-                        {/* Timings */}
-                        {seva.timings && seva.timings.length > 0 && (
-                          <div className="text-sm md:text-base">
-                            <span className="font-semibold text-gray-700">
-                              {t("sevas.timings", "Timings")}:{" "}
-                            </span>
-                            <span className="text-gray-800">
-                              {seva.timings.join(", ")}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Price */}
-                        {seva.price > 0 && (
-                          <div className="bg-[#8B0000] text-white px-4 py-2 rounded-lg font-bold text-center whitespace-nowrap">
-                            ₹{seva.price}
-                          </div>
-                        )}
-                        {seva.price === 0 && (
-                          <div className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-center whitespace-nowrap">
-                            {t("sevas.free", "Free")}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <DailySevas type="daily" />
         </div>
       </div>
     </Container>

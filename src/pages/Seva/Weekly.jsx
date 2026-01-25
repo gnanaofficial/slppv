@@ -3,6 +3,7 @@ import { Container } from "@mui/material";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { useTranslation } from "react-i18next";
+import DailySevas from "../../components/sections/Sevas/DailySevas";
 
 const Weekly = () => {
   const { t, i18n } = useTranslation();
@@ -90,159 +91,10 @@ const Weekly = () => {
 
       {/* Content */}
       <div className="w-[95%] lg:w-5/6 mb-8">
-        {loading ? (
-          <div className="bg-white rounded-lg p-8 text-center">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-gray-200 rounded w-1/4 mx-auto"></div>
-              <div className="h-64 bg-gray-200 rounded"></div>
-            </div>
-            <p className="text-gray-600 mt-4">
-              {t("common.loading", "Loading...")}
-            </p>
-          </div>
-        ) : error ? (
-          <div className="bg-white rounded-lg p-8 text-center">
-            <p className="text-red-600 mb-4">
-              {t("common.error", "Error loading sevas")}: {error}
-            </p>
-            <button
-              onClick={fetchWeeklySevas}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              {t("common.retry", "Retry")}
-            </button>
-          </div>
-        ) : sevas.length === 0 ? (
-          <div className="bg-white rounded-lg p-12 text-center">
-            <p className="text-gray-600 text-lg">
-              {t(
-                "sevas.noWeeklySevas",
-                "No weekly sevas available at the moment.",
-              )}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[#8B0000] text-white">
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                      {t("sevas.day", "Day")}
-                    </th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                      {t("sevas.sevaName", "Seva Name")}
-                    </th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                      {t("sevas.timings", "Timings")}
-                    </th>
-                    <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
-                      {t("sevas.price", "Price")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[0, 1, 2, 3, 4, 5, 6].map((dayNum) => {
-                    const daySevas = sevasByDay[dayNum] || [];
-                    if (daySevas.length === 0) return null;
-
-                    return daySevas.map((seva, index) => (
-                      <tr
-                        key={seva.id}
-                        className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
-                      >
-                        {index === 0 && (
-                          <td
-                            className="border border-gray-300 px-4 py-3 font-semibold text-[#8B0000]"
-                            rowSpan={daySevas.length}
-                          >
-                            {getDayName(dayNum)}
-                          </td>
-                        )}
-                        <td className="border border-gray-300 px-4 py-3">
-                          <div className="font-medium">
-                            {seva.name?.[currentLang] ||
-                              seva.name?.en ||
-                              "Unnamed Seva"}
-                          </div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            {seva.description?.[currentLang] ||
-                              seva.description?.en ||
-                              ""}
-                          </div>
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3">
-                          {seva.timings && seva.timings.length > 0
-                            ? seva.timings.join(", ")
-                            : "-"}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-3 font-semibold">
-                          {seva.price > 0
-                            ? `₹${seva.price}`
-                            : t("sevas.free", "Free")}
-                        </td>
-                      </tr>
-                    ));
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="md:hidden p-4 space-y-4">
-              {[0, 1, 2, 3, 4, 5, 6].map((dayNum) => {
-                const daySevas = sevasByDay[dayNum] || [];
-                if (daySevas.length === 0) return null;
-
-                return (
-                  <div
-                    key={dayNum}
-                    className="border-b border-gray-200 pb-4 last:border-b-0"
-                  >
-                    <h3 className="text-lg font-bold text-[#8B0000] mb-3">
-                      {getDayName(dayNum)}
-                    </h3>
-                    {daySevas.map((seva) => (
-                      <div
-                        key={seva.id}
-                        className="bg-gray-50 rounded-lg p-4 mb-3 last:mb-0"
-                      >
-                        <h4 className="font-semibold text-gray-800 mb-1">
-                          {seva.name?.[currentLang] ||
-                            seva.name?.en ||
-                            "Unnamed Seva"}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {seva.description?.[currentLang] ||
-                            seva.description?.en ||
-                            ""}
-                        </p>
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-700">
-                            <span className="font-medium">
-                              {t("sevas.timings", "Timings")}:
-                            </span>{" "}
-                            {seva.timings && seva.timings.length > 0
-                              ? seva.timings.join(", ")
-                              : "-"}
-                          </span>
-                          <span className="font-semibold text-[#8B0000]">
-                            {seva.price > 0
-                              ? `₹${seva.price}`
-                              : t("sevas.free", "Free")}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Content */}
+        <DailySevas type="weekly" />
       </div>
-    </Container>
+    </Container >
   );
 };
 

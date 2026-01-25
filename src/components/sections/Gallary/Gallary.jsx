@@ -36,9 +36,6 @@ const Gallary = () => {
     setSelectedImage(null);
   };
 
-  // Get first 4 images for display (or fallback to empty array)
-  const displayImages = images.slice(0, 4);
-
   return (
     <section id="gallery" className="mt-12 sm:mt-16 md:mt-20 lg:mt-24">
       <Container maxWidth="xl">
@@ -62,68 +59,47 @@ const Gallary = () => {
             <p className="text-gray-500 text-sm mt-2">Check back soon!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 w-full max-w-7xl mx-auto px-4">
-            {/* First large image - smaller and centered on small screens */}
-            {displayImages[0] && (
-              <div className="col-span-12 md:col-span-4 lg:col-span-4 flex justify-center items-center w-full gap-4 md:gap-0">
-                <div className="w-1/2 md:w-full aspect-[4/5] overflow-hidden rounded-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full max-w-7xl mx-auto px-4">
+            {images.map((image, index) => (
+              <div
+                key={image.id}
+                className={`
+                  relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer group
+                  ${index % 7 === 0 ? "sm:col-span-2 sm:row-span-2" : ""}
+                  ${index % 11 === 0 ? "md:col-span-2" : ""}
+                `}
+                onClick={() => openModal(image.imageUrl)}
+              >
+                {/* Image */}
+                <div className="aspect-square overflow-hidden">
                   <img
-                    className="w-full h-full object-cover cursor-pointer transition duration-300 hover:opacity-90"
-                    src={displayImages[0].imageUrl}
-                    alt={displayImages[0].caption || "Gallery image"}
-                    onClick={() => openModal(displayImages[0].imageUrl)}
+                    src={image.imageUrl}
+                    alt={image.caption || "Gallery image"}
+                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
                   />
                 </div>
-                {displayImages[3] && (
-                  <div className="w-1/2 md:w-full aspect-[4/5] overflow-hidden rounded-lg block md:hidden">
-                    <img
-                      className="w-full h-full object-cover cursor-pointer transition duration-300 hover:opacity-90"
-                      src={displayImages[3].imageUrl}
-                      alt={displayImages[3].caption || "Gallery image"}
-                      onClick={() => openModal(displayImages[3].imageUrl)}
-                    />
+
+                {/* Overlay with caption */}
+                {(image.caption || image.captionTelugu) && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {image.caption && (
+                      <p className="text-white font-semibold text-sm md:text-base">
+                        {image.caption}
+                      </p>
+                    )}
+                    {image.captionTelugu && (
+                      <p className="text-white/90 text-xs md:text-sm mt-1">
+                        {image.captionTelugu}
+                      </p>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Middle column with two images - takes 4 cols on md, 2 on lg */}
-            <div className="col-span-12 md:col-span-4 flex flex-row md:flex-col justify-between gap-4">
-              {displayImages[1] && (
-                <div className="w-full aspect-[5/3] overflow-hidden rounded-lg">
-                  <img
-                    className="w-full h-full object-cover cursor-pointer transition duration-300 hover:opacity-90"
-                    src={displayImages[1].imageUrl}
-                    alt={displayImages[1].caption || "Gallery image"}
-                    onClick={() => openModal(displayImages[1].imageUrl)}
-                  />
-                </div>
-              )}
-              {displayImages[2] && (
-                <div className="w-full aspect-[5/3] overflow-hidden rounded-lg">
-                  <img
-                    className="w-full h-full object-cover cursor-pointer transition duration-300 hover:opacity-90"
-                    src={displayImages[2].imageUrl}
-                    alt={displayImages[2].caption || "Gallery image"}
-                    onClick={() => openModal(displayImages[2].imageUrl)}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Last large image - smaller and centered on small screens */}
-            {displayImages[3] && (
-              <div className="md:col-span-4 lg:col-span-4 flex justify-center hidden md:block">
-                <div className="w-4/5 md:w-full aspect-[4/5] overflow-hidden rounded-lg">
-                  <img
-                    className="w-full h-full object-cover cursor-pointer transition duration-300 hover:opacity-90"
-                    src={displayImages[3].imageUrl}
-                    alt={displayImages[3].caption || "Gallery image"}
-                    onClick={() => openModal(displayImages[3].imageUrl)}
-                  />
-                </div>
+                {/* Hover effect overlay */}
+                <div className="absolute inset-0 bg-mainColor/0 group-hover:bg-mainColor/10 transition-colors duration-300"></div>
               </div>
-            )}
+            ))}
           </div>
         )}
 

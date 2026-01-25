@@ -201,10 +201,10 @@ export const getSevas = async () => {
         }
 
         // Fetch from Firestore
+        // Note: Removed orderBy to avoid index requirement for where+orderBy
         const q = query(
             collection(db, "sevas"),
-            where("enabled", "==", true),
-            orderBy("order", "asc")
+            where("enabled", "==", true)
         );
 
         const snapshot = await getDocs(q);
@@ -216,6 +216,9 @@ export const getSevas = async () => {
                 ...doc.data(),
             });
         });
+
+        // Sort client-side
+        sevas.sort((a, b) => (a.order || 0) - (b.order || 0));
 
         // Update cache
         contentCache.set(cacheKey, {
@@ -236,7 +239,7 @@ export const getSevas = async () => {
  */
 export const getAllSevas = async () => {
     try {
-        const q = query(collection(db, "sevas"), orderBy("order", "asc"));
+        const q = query(collection(db, "sevas"));
         const snapshot = await getDocs(q);
         const sevas = [];
 
@@ -246,6 +249,9 @@ export const getAllSevas = async () => {
                 ...doc.data(),
             });
         });
+
+        // Sort client-side
+        sevas.sort((a, b) => (a.order || 0) - (b.order || 0));
 
         return sevas;
     } catch (error) {

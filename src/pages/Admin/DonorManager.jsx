@@ -152,16 +152,22 @@ const DonorManager = () => {
         </div>
         <div className="flex gap-3">
           <Link
-            to="/admin/donors/manual-entry"
+            to="/temple-management/donors/manual-entry"
             className="flex items-center gap-2 px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition"
           >
             <FiPlus /> Manual Entry
           </Link>
           <Link
-            to="/admin/donors/history"
+            to="/temple-management/donors/history"
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
           >
-            <FiRefreshCw /> History
+            <FiRefreshCw /> Donations
+          </Link>
+          <Link
+            to="/temple-management/donors/deleted"
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+          >
+            <FiTrash2 /> Deleted
           </Link>
         </div>
       </div>
@@ -212,9 +218,8 @@ const DonorManager = () => {
         <div className="flex gap-2">
           <button
             onClick={fetchDonors}
-            className={`p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition ${
-              refreshing ? "animate-spin" : ""
-            }`}
+            className={`p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition ${refreshing ? "animate-spin" : ""
+              }`}
             title="Refresh"
           >
             <FiRefreshCw />
@@ -284,11 +289,10 @@ const DonorManager = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          donor.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${donor.active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {donor.active ? "Active" : "Inactive"}
                       </span>
@@ -394,9 +398,12 @@ const DonorManager = () => {
 import {
   createInvoice,
   downloadInvoicePDF,
+  downloadDonorStatement,
   printInvoice,
+  getInvoiceBase64,
+  getStatementBase64
 } from "../../lib/invoiceService";
-import { FiPrinter, FiDownload } from "react-icons/fi";
+import { FiPrinter, FiDownload, FiFileText, FiMail } from "react-icons/fi";
 
 const DonorDetailModal = ({ donor, onClose }) => {
   const [transactions, setTransactions] = useState([]);
@@ -451,6 +458,112 @@ const DonorDetailModal = ({ donor, onClose }) => {
     } catch (error) {
       console.error("Download error:", error);
       toast.error("Failed to download invoice");
+    }
+  };
+
+  const handleDownloadStatement = () => {
+    if (transactions.length === 0) {
+      toast.error("No transactions to generate statement");
+      return;
+    }
+    try {
+      downloadDonorStatement(donor, transactions);
+      toast.success("Statement download started");
+    } catch (error) {
+      console.error("Statement error:", error);
+      toast.error("Failed to generate statement");
+    }
+  };
+
+  const handleEmailInvoice = async (transaction) => {
+    const toastId = toast.loading("Sending email...");
+    try {
+      const invoice = createInvoice({
+        ...transaction,
+        donorName: donor.name,
+        donorEmail: donor.email,
+        donorPhone: donor.phone,
+        donorId: donor.donorId,
+      });
+
+      const pdfBase64 = getInvoiceBase64(invoice);
+
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: donor.email,
+          subject: `Donation Receipt - ${invoice.invoiceNumber}`,
+          html: `
+            <div style="font-family: sans-serif; color: #333;">
+              <h2>Thank you for your donation!</h2>
+              <p>Dear ${donor.name},</p>
+              <p>We gratefully acknowledge your donation of <strong>₹${transaction.amount}</strong> for <strong>${transaction.purpose}</strong>.</p>
+              <p>Please find the official receipt attached to this email.</p>
+              <br/>
+              <p>May Lord Venkateswara bless you and your family.</p>
+              <p><strong>Sri Prasanna Venkateswara Swamy Temple</strong></p>
+            </div>
+          `,
+          attachments: [
+            {
+              filename: `Receipt-${invoice.invoiceNumber}.pdf`,
+              content: pdfBase64
+            }
+          ]
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to send email');
+
+      toast.success("Receipt sent to donor!", { id: toastId });
+    } catch (error) {
+      console.error("Email error:", error);
+      toast.error("Failed to send email. Check API configuration.", { id: toastId });
+    }
+  };
+
+  const handleEmailStatement = async () => {
+    if (transactions.length === 0) return;
+    const toastId = toast.loading("Sending statement...");
+    try {
+      const pdfBase64 = getStatementBase64(donor, transactions);
+
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: donor.email,
+          subject: `Statement of Account - ${donor.name}`,
+          html: `
+            <div style="font-family: sans-serif; color: #333;">
+              <h2>Statement of Account</h2>
+              <p>Dear ${donor.name},</p>
+              <p>Please find attached the statement of your donations to date.</p>
+              <br/>
+              <p>Thank you for your continued support.</p>
+              <p><strong>Sri Prasanna Venkateswara Swamy Temple</strong></p>
+            </div>
+          `,
+          attachments: [
+            {
+              filename: `Statement-${donor.donorId}.pdf`,
+              content: pdfBase64
+            }
+          ]
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to send email');
+
+      toast.success("Statement sent successfully!", { id: toastId });
+    } catch (error) {
+      console.error("Email error:", error);
+      toast.error("Failed to send email.", { id: toastId });
     }
   };
 
@@ -513,9 +626,28 @@ const DonorDetailModal = ({ donor, onClose }) => {
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-800 mb-2">
-              Transaction History
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold text-gray-800">
+                Transaction History
+              </h3>
+              {transactions.length > 0 && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleEmailStatement}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition"
+                    title="Email Statement to Donor"
+                  >
+                    <FiMail /> Email Statement
+                  </button>
+                  <button
+                    onClick={handleDownloadStatement}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                  >
+                    <FiFileText /> Download
+                  </button>
+                </div>
+              )}
+            </div>
             {loading ? (
               <div className="text-center py-8 text-gray-500">
                 <div className="animate-spin inline-block w-6 h-6 border-2 border-mainColor border-t-transparent rounded-full mb-2"></div>
@@ -553,11 +685,10 @@ const DonorDetailModal = ({ donor, onClose }) => {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              t.status === "success"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${t.status === "success"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                              }`}
                           >
                             {t.status}
                           </span>
@@ -570,6 +701,13 @@ const DonorDetailModal = ({ donor, onClose }) => {
                               title="Print Invoice"
                             >
                               <FiPrinter size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleEmailInvoice(t)}
+                              className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded transition"
+                              title="Email Receipt"
+                            >
+                              <FiMail size={16} />
                             </button>
                             <button
                               onClick={() => handleDownloadInvoice(t)}

@@ -112,7 +112,7 @@ const DonorHistory = () => {
           </p>
         </div>
         <button
-          onClick={() => navigate("/admin/donors")}
+          onClick={() => navigate("/temple-management/donors")}
           className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold"
         >
           ← Back to Donors

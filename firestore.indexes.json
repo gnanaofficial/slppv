@@ -1,0 +1,65 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "gallery_images",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "enabled",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "order",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "gallery_images",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "enabled",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "order",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "hero_images",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "enabled",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "order",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "sevas",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "enabled",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "order",
+                    "order": "ASCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

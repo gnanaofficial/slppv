@@ -1,6 +1,7 @@
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebase";
 import { createDonor, createDonation, createAdmin } from "./firestoreService";
+import { addSeva } from "./contentService";
 import { generateDonorId } from "./donorService";
 
 /**
@@ -59,6 +60,57 @@ const sampleAdmins = [
     name: "Sub Admin 2",
     role: "sub_admin",
     permissions: ["donors.view", "gallery.manage", "videos.manage"],
+  },
+];
+
+/**
+ * Sample Sevas
+ */
+const sampleSevas = [
+  {
+    name: "Suprabhata Seva",
+    nameTelugu: "సుప్రభాత సేవ",
+    description: "The first seva of the day where the Lord is woken up with hymns.",
+    descriptionTelugu: "స్వామివారిని మేల్కొలిపే ప్రథమ సేవ.",
+    price: 516,
+    category: "daily",
+    enabled: true,
+  },
+  {
+    name: "Thomala Seva",
+    nameTelugu: "తోమాల సేవ",
+    description: "Decorating the Lord with beautiful flower garlands.",
+    descriptionTelugu: "స్వామివారిని పూలమాలలతో అలంకరించే సేవ.",
+    price: 1016,
+    category: "daily",
+    enabled: true,
+  },
+  {
+    name: "Archana",
+    nameTelugu: "అర్చన",
+    description: "Chanting the 1008 names of Lord Venkateswara.",
+    descriptionTelugu: "స్వామివారి 1008 నామాలను స్మరించే సేవ.",
+    price: 216,
+    category: "daily",
+    enabled: true,
+  },
+  {
+    name: "Kalyanotsavam",
+    nameTelugu: "కళ్యాణోత్సవం",
+    description: "The celestial wedding ceremony of the Lord and Goddesses.",
+    descriptionTelugu: "స్వామివార్ల కళ్యాణ మహోత్సవం.",
+    price: 2516,
+    category: "weekly",
+    enabled: true,
+  },
+  {
+    name: "Abhishekam",
+    nameTelugu: "అభిషేకం",
+    description: "Holy bath to the deity with milk, curd, honey, etc.",
+    descriptionTelugu: "స్వామివారికి పంచామృతాలతో స్నపన తిరుమంజనం.",
+    price: 3016,
+    category: "weekly",
+    enabled: true,
   },
 ];
 
@@ -157,7 +209,7 @@ export const seedDonors = async () => {
           amount: getRandomAmount(),
           purpose:
             donationPurposes[
-              Math.floor(Math.random() * donationPurposes.length)
+            Math.floor(Math.random() * donationPurposes.length)
             ],
           paymentMethod:
             paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
@@ -229,6 +281,25 @@ export const seedAdmins = async () => {
 };
 
 /**
+ * Seed Sevas
+ */
+export const seedSevas = async () => {
+  console.log("🌱 Starting seva seeding...");
+  const createdSevas = [];
+
+  for (const seva of sampleSevas) {
+    try {
+      const id = await addSeva(seva);
+      createdSevas.push({ ...seva, id });
+      console.log(`✅ Created seva: ${seva.name}`);
+    } catch (error) {
+      console.error(`❌ Error creating seva ${seva.name}:`, error);
+    }
+  }
+  return createdSevas;
+};
+
+/**
  * Seed all data
  */
 export const seedAllData = async () => {
@@ -237,6 +308,8 @@ export const seedAllData = async () => {
   const donorResult = await seedDonors();
   console.log("\n");
   const adminResult = await seedAdmins();
+  console.log("\n");
+  await seedSevas();
 
   const allCredentials = [
     ...donorResult.credentials,

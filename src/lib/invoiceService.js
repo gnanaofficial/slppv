@@ -15,6 +15,21 @@ export const generateInvoiceNumber = () => {
 };
 
 /**
+ * Get PDF as Base64 string (for email attachments)
+ */
+export const getInvoiceBase64 = (invoiceData) => {
+  const doc = generateInvoicePDF(invoiceData);
+  // output('datauristring') returns "data:application/pdf;base64,..."
+  // we split to get just the base64 content
+  return doc.output("datauristring").split(",")[1];
+};
+
+export const getStatementBase64 = (donor, transactions) => {
+  const doc = generateDonorStatementPDF(donor, transactions);
+  return doc.output("datauristring").split(",")[1];
+};
+
+/**
  * Create invoice data structure
  */
 export const createInvoice = (donationData) => {
@@ -263,4 +278,117 @@ export const formatInvoiceForDisplay = (invoiceData) => {
       day: "numeric",
     }),
   };
+};
+
+/**
+ * Generate Donor Statement PDF
+ */
+export const generateDonorStatementPDF = (donor, transactions, dateRange = "All Time") => {
+  const doc = new jsPDF();
+
+  // Color Palette
+  const mainColor = [165, 42, 42]; // #A52A2A
+  const accentColor = [250, 172, 47]; // #FAAC2F
+
+  // Header
+  doc.setFillColor(...accentColor);
+  doc.rect(0, 0, 210, 40, "F");
+
+  doc.setTextColor(165, 42, 42);
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.text("Sri Lakshmi Padmavathi Temple", 105, 20, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "normal");
+  doc.text("Donor Transaction Statement", 105, 32, { align: "center" });
+
+  // Statement Meta
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 50);
+  doc.text(`Period: ${dateRange}`, 20, 56);
+
+  // Donor Details
+  doc.setDrawColor(200, 200, 200);
+  doc.line(20, 60, 190, 60);
+
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Donor Information", 20, 70);
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Name: ${donor.name}`, 20, 80);
+  doc.text(`ID: ${donor.donorId || "N/A"}`, 20, 86);
+  doc.text(`Email: ${donor.email}`, 120, 80);
+  doc.text(`Phone: ${donor.phone}`, 120, 86);
+  if (donor.address) {
+    doc.text(`Address: ${donor.address}`, 20, 92);
+  }
+
+  // Transactions Table
+  const tableRows = transactions.map(t => [
+    new Date(t.createdAt).toLocaleDateString(),
+    t.purpose || "Donation",
+    t.paymentMethod || "N/A",
+    t.id.slice(0, 8) + "...", // Short ID
+    { content: `Rs ${t.amount.toLocaleString("en-IN")}`, styles: { halign: 'right' } }
+  ]);
+
+  autoTable(doc, {
+    startY: 105,
+    head: [["Date", "Purpose", "Payment", "Trans ID", "Amount"]],
+    body: tableRows,
+    theme: "grid",
+    headStyles: {
+      fillColor: mainColor,
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+    },
+    columnStyles: {
+      4: { halign: 'right' }
+    },
+    styles: {
+      fontSize: 10,
+    }
+  });
+
+  // Totals
+  const totalAmount = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+  const finalY = doc.lastAutoTable.finalY + 10;
+
+  doc.setFillColor(...accentColor);
+  doc.rect(120, finalY, 70, 15, "F");
+
+  doc.setTextColor(165, 42, 42);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Total Donated:", 125, finalY + 10);
+  doc.text(`Rs ${totalAmount.toLocaleString("en-IN")}`, 185, finalY + 10, { align: "right" });
+
+  // Footer
+  doc.setTextColor(100, 100, 100);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    "This statement is computer-generated and is for information purposes only.",
+    105,
+    280,
+    { align: "center" }
+  );
+
+  return doc;
+};
+
+export const downloadDonorStatement = (donor, transactions) => {
+  const doc = generateDonorStatementPDF(donor, transactions);
+  doc.save(`Statement-${donor.name.replace(/\s+/g, "_")}-${new Date().toISOString().slice(0, 10)}.pdf`);
+};
+
+export const printDonorStatement = (donor, transactions) => {
+  const doc = generateDonorStatementPDF(donor, transactions);
+  doc.autoPrint();
+  const blobUrl = doc.output("bloburl");
+  window.open(blobUrl, "_blank");
 };

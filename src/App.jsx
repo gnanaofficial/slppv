@@ -12,8 +12,8 @@ import "./lib/i18n"; // Initialize i18n
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
-  // simple check: if url contains 'admin', don't play
-  const isAdmin = window.location.pathname.includes("admin");
+  // simple check: if url contains 'temple-management', don't play
+  const isAdmin = window.location.pathname.includes("temple-management");
 
   return (
     <AdminProvider>

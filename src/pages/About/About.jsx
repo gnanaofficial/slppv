@@ -1,26 +1,30 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import white from "@/assets/white.svg";
 import { Container } from "@mui/material";
 import Content from "./Content";
 import ImageSection from "./ImageSection";
-import { storyData } from "./StoryData";
+import { getStoryData } from "./StoryData";
 
 import SEO from "../../components/common/SEO";
 
 const About = () => {
+  const { t } = useTranslation();
+  const storyData = getStoryData(t);
+
   return (
     <div className="mb-5 h-full">
       <SEO
-        title="About Us"
+        title={t('about.title')}
         description="Learn about the history and journey of Sri Lakshmi Padmavathi Sameta Sri Prasanna Venkateswara Swamy Temple."
         keywords="About, History, Temple Journey"
       />
       <div className="flex flex-col justify-center items-center gap-2 py-5">
         <h1 className="text-white font-montserrat font-semibold text-base sm:text-lg lg:text-xl tracking-wide uppercase">
-          About Us
+          {t('about.title')}
         </h1>
         <h1 className="text-xl sm:text-3xl md:text-4xl text-mainColor font-semibold capitalize">
-          The Story of Our Journey
+          {t('about.subtitle')}
         </h1>
         <img className="w-1/8 animate-pulse" src={white} alt="" />
       </div>
@@ -30,9 +34,8 @@ const About = () => {
             <div className="flex flex-col">
               {storyData.map((story) => (
                 <div
-                  className={`flex  ${
-                    story.id % 2 === 1 ? "flex-row" : "flex-row-reverse"
-                  }`}
+                  className={`flex  ${story.id % 2 === 1 ? "flex-row" : "flex-row-reverse"
+                    }`}
                   key={story.id}
                 >
                   <div className="w-3/6 md:w-2/3">

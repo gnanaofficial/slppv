@@ -22,6 +22,7 @@ import {
   MdEmail,
   MdAttachMoney,
   MdImage,
+  MdAccessTime, // Added MdAccessTime for the Clock icon
 } from "react-icons/md";
 
 const Dashboard = () => {
@@ -58,7 +59,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await auth.signOut();
-    navigate("/admin/login");
+    navigate("/temple-management/login");
   };
 
   const toggleDropdown = (key) => {
@@ -123,28 +124,37 @@ const Dashboard = () => {
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1 font-montserrat scrollbar-thin scrollbar-thumb-[#8B0000] scrollbar-track-transparent">
           {/* Dashboard Home */}
           <NavItem
-            to="/admin"
+            to="/temple-management"
             icon={<MdDashboard />}
             label="Dashboard"
-            isActive={isActive("/admin")}
+            isActive={isActive("/temple-management")}
             isCollapsed={!isSidebarOpen}
           />
 
           {/* Manage Gallery */}
           <NavItem
-            to="/admin/gallery"
+            to="/temple-management/gallery"
             icon={<MdPhotoLibrary />}
             label="Gallery"
-            isActive={isActive("/admin/gallery")}
+            isActive={isActive("/temple-management/gallery")}
+            isCollapsed={!isSidebarOpen}
+          />
+
+          {/* Daily Schedule */}
+          <NavItem
+            to="/temple-management/daily-sevas"
+            icon={<MdAccessTime />}
+            label="Daily Schedule"
+            isActive={isActive("/temple-management/daily-sevas")}
             isCollapsed={!isSidebarOpen}
           />
 
           {/* Manage Videos */}
           <NavItem
-            to="/admin/videos"
+            to="/temple-management/videos"
             icon={<MdVideoLibrary />}
             label="Videos"
-            isActive={isActive("/admin/videos")}
+            isActive={isActive("/temple-management/videos")}
             isCollapsed={!isSidebarOpen}
           />
 
@@ -155,29 +165,29 @@ const Dashboard = () => {
             isOpen={openDropdowns.donors}
             onToggle={() => toggleDropdown("donors")}
             isCollapsed={!isSidebarOpen}
-            isActive={isParentActive(["/admin/donors"])}
+            isActive={isParentActive(["/temple-management/donors"])}
           >
             <NavItem
-              to="/admin/donors"
+              to="/temple-management/donors"
               icon={<MdPeople />}
               label="All Donors"
-              isActive={isActive("/admin/donors")}
+              isActive={isActive("/temple-management/donors")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
             <NavItem
-              to="/admin/donors/manual-entry"
+              to="/temple-management/donors/manual-entry"
               icon={<MdPersonAdd />}
               label="Manual Entry"
-              isActive={isActive("/admin/donors/manual-entry")}
+              isActive={isActive("/temple-management/donors/manual-entry")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
             <NavItem
-              to="/admin/donors/history"
+              to="/temple-management/donors/history"
               icon={<MdHistory />}
               label="History"
-              isActive={isActive("/admin/donors/history")}
+              isActive={isActive("/temple-management/donors/history")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
@@ -190,37 +200,37 @@ const Dashboard = () => {
             isOpen={openDropdowns.content}
             onToggle={() => toggleDropdown("content")}
             isCollapsed={!isSidebarOpen}
-            isActive={isParentActive(["/admin/hero-images", "/admin/gallery-images", "/admin/sevas", "/admin/site-content"])}
+            isActive={isParentActive(["/temple-management/hero-images", "/temple-management/gallery-images", "/temple-management/sevas", "/temple-management/site-content"])}
           >
             <NavItem
-              to="/admin/hero-images"
+              to="/temple-management/hero-images"
               icon={<MdImage />}
               label="Hero Images"
-              isActive={isActive("/admin/hero-images")}
+              isActive={isActive("/temple-management/hero-images")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
             <NavItem
-              to="/admin/gallery-images"
+              to="/temple-management/gallery-images"
               icon={<MdPhotoLibrary />}
               label="Gallery Images"
-              isActive={isActive("/admin/gallery-images")}
+              isActive={isActive("/temple-management/gallery-images")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
             <NavItem
-              to="/admin/sevas"
+              to="/temple-management/sevas"
               icon={<MdTempleHindu />}
               label="Sevas"
-              isActive={isActive("/admin/sevas")}
+              isActive={isActive("/temple-management/sevas")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
             <NavItem
-              to="/admin/site-content"
+              to="/temple-management/site-content"
               icon={<MdWeb />}
               label="Site Content"
-              isActive={isActive("/admin/site-content")}
+              isActive={isActive("/temple-management/site-content")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
@@ -233,29 +243,29 @@ const Dashboard = () => {
             isOpen={openDropdowns.settings}
             onToggle={() => toggleDropdown("settings")}
             isCollapsed={!isSidebarOpen}
-            isActive={isParentActive(["/admin/sub-admins", "/admin/email", "/admin/payment"])}
+            isActive={isParentActive(["/temple-management/sub-admins", "/temple-management/email", "/temple-management/payment"])}
           >
             <NavItem
-              to="/admin/sub-admins"
+              to="/temple-management/sub-admins"
               icon={<MdAdminPanelSettings />}
               label="Sub-Admins"
-              isActive={isActive("/admin/sub-admins")}
+              isActive={isActive("/temple-management/sub-admins")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
             <NavItem
-              to="/admin/email-config"
+              to="/temple-management/email-config"
               icon={<MdEmail />}
               label="Email Config"
-              isActive={isActive("/admin/email-config")}
+              isActive={isActive("/temple-management/email-config")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />
             <NavItem
-              to="/admin/site-settings"
+              to="/temple-management/site-settings"
               icon={<MdSettings />}
               label="Site Settings"
-              isActive={isActive("/admin/site-settings")}
+              isActive={isActive("/temple-management/site-settings")}
               isCollapsed={!isSidebarOpen}
               isSubItem
             />

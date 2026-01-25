@@ -17,6 +17,7 @@ const Daily = lazy(() => import("./pages/Seva/Daily"));
 const Auspicious = lazy(() => import("./pages/Seva/Auspicious"));
 const Monthly = lazy(() => import("./pages/Seva/Monthly"));
 const Weekly = lazy(() => import("./pages/Seva/Weekly"));
+const Booking = lazy(() => import("./pages/Seva/Booking"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Trust = lazy(() => import("./pages/Trust/Trust"));
@@ -31,6 +32,8 @@ const ManualDonationEntry = lazy(
   () => import("./pages/Admin/ManualDonationEntry"),
 );
 const DonorHistory = lazy(() => import("./pages/Admin/DonorHistory"));
+const DonationHistory = lazy(() => import("./pages/Admin/DonationHistory"));
+const DailySevasManager = lazy(() => import("./pages/Admin/DailySevasManager"));
 const SubAdminManager = lazy(() => import("./pages/Admin/SubAdminManager"));
 const SevaManager = lazy(() => import("./pages/Admin/SevaManager"));
 const Setup = lazy(() => import("./pages/Admin/Setup"));
@@ -156,6 +159,14 @@ const AnimatedRoutes = () => {
             }
           />
           <Route
+            path="/sevas/booking"
+            element={
+              <Layout>
+                <Booking />
+              </Layout>
+            }
+          />
+          <Route
             path="/feedback"
             element={
               <Layout>
@@ -191,10 +202,10 @@ const AnimatedRoutes = () => {
           />
 
           {/* Admin Routes - No animations to avoid conflicts with Sidebar */}
-          <Route path="/admin/setup" element={<Setup />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/temple-management/setup" element={<Setup />} />
+          <Route path="/temple-management/login" element={<AdminLogin />} />
           <Route
-            path="/admin"
+            path="/temple-management"
             element={
               <AdminRoute>
                 <Dashboard />
@@ -210,7 +221,10 @@ const AnimatedRoutes = () => {
               path="donors/manual-entry"
               element={<ManualDonationEntry />}
             />
-            <Route path="donors/history" element={<DonorHistory />} />
+            <Route path="donors/history" element={<DonationHistory />} />
+            <Route path="donors/deleted" element={<DonorHistory />} />
+            <Route path="donors/history" element={<DonationHistory />} /> {/* Fallback or main */}
+            <Route path="daily-sevas" element={<DailySevasManager />} />
             <Route path="sub-admins" element={<SubAdminManager />} />
             <Route path="hero-images" element={<HeroImagesManager />} />
             <Route path="sevas" element={<SevaManager />} />

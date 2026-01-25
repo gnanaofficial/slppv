@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../../context/AdminContext";
 import {
   getAllDonations,
@@ -23,7 +24,8 @@ import {
 } from "recharts";
 
 const DashboardHome = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { adminData } = useAdmin();
   const [stats, setStats] = useState({
     totalDonations: 0,
@@ -34,6 +36,13 @@ const DashboardHome = () => {
   });
   const [recentDonations, setRecentDonations] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const currentLanguage = i18n.language;
+
+  const toggleLanguage = () => {
+    const newLang = currentLanguage === "en" ? "te" : "en";
+    i18n.changeLanguage(newLang);
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -95,14 +104,25 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
+      {/* Welcome Section with Language Toggle */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-mainColor font-play">
-          {t("admin.dashboard")}
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Welcome back, {adminData?.email || "Admin"}
-        </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-mainColor font-play">
+              {t("admin.dashboard")}
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Welcome back, {adminData?.email || "Admin"}
+            </p>
+          </div>
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center gap-2 px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition font-semibold"
+          >
+            <span className="text-lg">🌐</span>
+            <span>{currentLanguage === "en" ? "తెలుగు" : "English"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -185,9 +205,18 @@ const DashboardHome = () => {
 
         {/* Recent Donations */}
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold text-mainColor mb-4">
-            {t("admin.recent_donations")}
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-mainColor">
+              {t("admin.recent_donations")}
+            </h2>
+            <button
+              onClick={() => navigate("/temple-management/donors/history")}
+              className="px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition font-semibold text-sm flex items-center gap-2"
+            >
+              <span>View All</span>
+              <span>→</span>
+            </button>
+          </div>
           <div className="space-y-3 max-h-80 overflow-y-auto">
             {recentDonations.length === 0 ? (
               <p className="text-gray-500 text-center py-8">No donations yet</p>
@@ -212,11 +241,10 @@ const DashboardHome = () => {
                       ₹{donation.amount?.toLocaleString("en-IN")}
                     </p>
                     <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        donation.status === "success"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      className={`text-xs px-2 py-1 rounded ${donation.status === "success"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
                     >
                       {donation.status}
                     </span>

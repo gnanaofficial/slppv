@@ -498,6 +498,88 @@ export const updateSiteContent = async (contentId, data, updatedBy) => {
 };
 
 // ============================================
+// SEVA SCHEDULES (Daily, Weekly, Monthly, Auspicious)
+// ============================================
+
+/**
+ * Get seva schedule by type
+ * type: 'daily', 'weekly', 'monthly', 'auspicious'
+ */
+export const getSevaSchedule = async (type = "daily") => {
+  try {
+    const docId = `${type}Sevas`; // e.g., dailySevas, weeklySevas
+    const data = await getSiteContent(docId);
+    return data?.schedule || [];
+  } catch (error) {
+    console.error(`Error getting ${type} sevas:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Get seva categories
+ */
+export const getSevaCategories = async () => {
+  try {
+    const data = await getSiteContent("sevaCategories");
+    return data?.categories || [
+      { id: "daily", label: "Daily Sevas", layout: "timeline" },
+      { id: "weekly", label: "Weekly Sevas", layout: "cards" },
+      { id: "monthly", label: "Monthly Sevas", layout: "grid" },
+      { id: "auspicious", label: "Auspicious Sevas", layout: "banner" },
+    ];
+  } catch (error) {
+    console.error("Error getting seva categories:", error);
+    return [];
+  }
+};
+
+/**
+ * Update seva categories
+ */
+export const updateSevaCategories = async (categories, updatedBy) => {
+  try {
+    const docRef = doc(db, "siteContent", "sevaCategories");
+    await setDoc(
+      docRef,
+      {
+        categories,
+        updatedAt: serverTimestamp(),
+        updatedBy,
+      },
+      { merge: true },
+    );
+    return true;
+  } catch (error) {
+    console.error("Error updating seva categories:", error);
+    throw error;
+  }
+};
+
+/**
+ * Update seva schedule
+ */
+export const updateSevaSchedule = async (type, schedule, updatedBy) => {
+  try {
+    const docId = `${type}Sevas`;
+    const docRef = doc(db, "siteContent", docId);
+    await setDoc(
+      docRef,
+      {
+        schedule,
+        updatedAt: serverTimestamp(),
+        updatedBy,
+      },
+      { merge: true },
+    );
+    return true;
+  } catch (error) {
+    console.error(`Error updating ${type} sevas:`, error);
+    throw error;
+  }
+};
+
+// ============================================
 // REAL-TIME LISTENERS
 // ============================================
 

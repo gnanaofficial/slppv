@@ -146,7 +146,7 @@ export const getDeletedDonors = async () => {
     const snapshot = await getDocs(
       query(collection(db, "deleted_donors"), orderBy("deletedAt", "desc")),
     );
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
   } catch (error) {
     console.error("Error getting deleted donors:", error);
     throw error;
@@ -177,6 +177,7 @@ export const restoreDonor = async (deletedDonorId) => {
       // Restore with original ID
       await setDoc(doc(db, "donors", originalId), {
         ...restoreData,
+        active: true, // Ensure donor is active upon restoration
         restoredAt: serverTimestamp(),
       });
     } else {

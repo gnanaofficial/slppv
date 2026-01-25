@@ -84,7 +84,7 @@ const Setup = () => {
 
       // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate("/admin/login");
+        navigate("/temple-management/login");
       }, 2000);
     } catch (error) {
       console.error("Setup error:", error);
@@ -220,7 +220,7 @@ const Setup = () => {
 
         <div className="mt-4 text-center">
           <button
-            onClick={() => navigate("/admin/login")}
+            onClick={() => navigate("/temple-management/login")}
             className="text-mainColor hover:underline text-sm"
           >
             Already have an account? Login here

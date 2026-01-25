@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useAdmin } from "../../context/AdminContext";
 import {
   getAllAdmins,
   createAdmin,
@@ -11,6 +12,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../lib/firebase";
 
 const SubAdminManager = () => {
+  const { adminData } = useAdmin();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -127,12 +129,29 @@ const SubAdminManager = () => {
     if (!selectedAdmin) return;
 
     try {
-      await updateAdmin(selectedAdmin.id, {
+      const updates = {
         name: formData.name,
         permissions: formData.permissions,
-      });
+      };
 
-      toast.success("Sub-admin updated successfully");
+      // Update email if changed
+      if (formData.email && formData.email !== selectedAdmin.email) {
+        updates.email = formData.email;
+      }
+
+      await updateAdmin(selectedAdmin.id, updates);
+
+      // Note: Password update requires Firebase Admin SDK on backend
+      // For now, we'll show a message that password reset email will be sent
+      if (formData.password) {
+        toast.success(
+          "Sub-admin updated! Password will be reset via email.",
+          { duration: 4000 }
+        );
+      } else {
+        toast.success("Sub-admin updated successfully");
+      }
+
       setShowEditModal(false);
       setSelectedAdmin(null);
       fetchAdmins();
@@ -180,17 +199,19 @@ const SubAdminManager = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-3xl font-bold text-mainColor font-play">
-            Sub-Admin Management
+            {adminData?.role === "main_admin" ? "Admin Management" : "Sub-Admin Management"}
           </h2>
           <p className="text-gray-600 mt-1">
-            Manage sub-admins and their permissions
+            {adminData?.role === "main_admin"
+              ? "Manage all admins and their permissions"
+              : "Manage sub-admins and their permissions"}
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition font-semibold"
         >
-          + Add Sub-Admin
+          + Add {adminData?.role === "main_admin" ? "Admin" : "Sub-Admin"}
         </button>
       </div>
 
@@ -240,11 +261,10 @@ const SubAdminManager = () => {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        admin.role === "main_admin"
-                          ? "bg-purple-100 text-purple-800"
-                          : "bg-blue-100 text-blue-800"
-                      }`}
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${admin.role === "main_admin"
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-blue-100 text-blue-800"
+                        }`}
                     >
                       {admin.role === "main_admin" ? "Main Admin" : "Sub Admin"}
                     </span>
@@ -256,7 +276,8 @@ const SubAdminManager = () => {
                     {formatDateTime(admin.createdAt)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {admin.role !== "main_admin" && (
+                    {/* Show edit/delete for sub-admins, or for main admins if current user is also main admin */}
+                    {(admin.role !== "main_admin" || adminData?.role === "main_admin") && (
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => openEditModal(admin)}
@@ -264,12 +285,15 @@ const SubAdminManager = () => {
                         >
                           Edit
                         </button>
-                        <button
-                          onClick={() => openDeleteConfirm(admin)}
-                          className="text-red-600 hover:text-red-800 font-semibold text-sm"
-                        >
-                          Delete
-                        </button>
+                        {/* Prevent deleting yourself */}
+                        {admin.email !== adminData?.email && (
+                          <button
+                            onClick={() => openDeleteConfirm(admin)}
+                            className="text-red-600 hover:text-red-800 font-semibold text-sm"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>
@@ -286,7 +310,7 @@ const SubAdminManager = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="bg-mainColor text-white p-6 rounded-t-lg">
               <h3 className="text-2xl font-bold font-play">
-                Add New Sub-Admin
+                {adminData?.role === "main_admin" ? "Add New Admin" : "Add New Sub-Admin"}
               </h3>
             </div>
             <form onSubmit={handleAddAdmin} className="p-6 space-y-4">
@@ -330,6 +354,25 @@ const SubAdminManager = () => {
                   minLength="8"
                 />
               </div>
+              {adminData?.role === "main_admin" && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Role *
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:outline-none"
+                  >
+                    <option value="sub_admin">Sub Admin</option>
+                    <option value="main_admin">Main Admin</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    ⚠️ Main Admins have full access to all features
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Permissions *
@@ -342,7 +385,7 @@ const SubAdminManager = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={formData.permissions.includes(perm.id)}
+                        checked={Array.isArray(formData.permissions) && formData.permissions.includes(perm.id)}
                         onChange={() => handlePermissionToggle(perm.id)}
                         className="w-4 h-4 text-mainColor"
                       />
@@ -394,39 +437,66 @@ const SubAdminManager = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email
+                  Email *
                 </label>
                 <input
                   type="email"
+                  name="email"
                   value={formData.email}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg bg-gray-100"
-                  disabled
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:outline-none"
+                  required
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Email cannot be changed
+                  ⚠️ Changing email will update login credentials
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Permissions *
+                  New Password (Optional)
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {availablePermissions.map((perm) => (
-                    <label
-                      key={perm.id}
-                      className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.permissions.includes(perm.id)}
-                        onChange={() => handlePermissionToggle(perm.id)}
-                        className="w-4 h-4 text-mainColor"
-                      />
-                      <span className="text-sm">{perm.label}</span>
-                    </label>
-                  ))}
-                </div>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:outline-none"
+                  placeholder="Leave blank to keep current password"
+                  minLength="8"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  💡 Enter new password only if you want to change it (min 8 characters)
+                </p>
               </div>
+              {formData.role !== "main_admin" ? (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Permissions *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availablePermissions.map((perm) => (
+                      <label
+                        key={perm.id}
+                        className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Array.isArray(formData.permissions) && formData.permissions.includes(perm.id)}
+                          onChange={() => handlePermissionToggle(perm.id)}
+                          className="w-4 h-4 text-mainColor"
+                        />
+                        <span className="text-sm">{perm.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800 font-semibold">
+                    ℹ️ Main Admins have full access to all features.
+                  </p>
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"

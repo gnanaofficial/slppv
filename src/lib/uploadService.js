@@ -1,15 +1,23 @@
-import { storage } from "./firebase";
-import {
-    ref,
-    uploadBytesResumable,
-    getDownloadURL,
-    deleteObject,
-} from "firebase/storage";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { Upload } from "@aws-sdk/lib-storage";
 
 /**
- * Upload Service for Firebase Storage
- * Handles image uploads, compression, and deletion
+ * Upload Service for Cloudflare R2
+ * Handles image uploads, compression, and deletion using R2 S3-compatible API
  */
+
+// Initialize R2 Client
+const r2Client = new S3Client({
+    region: "auto",
+    endpoint: import.meta.env.VITE_R2_ENDPOINT,
+    credentials: {
+        accessKeyId: import.meta.env.VITE_R2_ACCESS_KEY_ID,
+        secretAccessKey: import.meta.env.VITE_R2_SECRET_ACCESS_KEY,
+    },
+});
+
+const BUCKET_NAME = import.meta.env.VITE_R2_BUCKET_NAME;
+const PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL;
 
 /**
  * Compress image before upload
@@ -87,11 +95,11 @@ export const validateImage = (file) => {
 };
 
 /**
- * Upload image to Firebase Storage
+ * Upload image to Cloudflare R2
  * @param {File} file - Image file to upload
- * @param {string} path - Storage path (e.g., 'hero-images', 'sevas')
+ * @param {string} path - Storage path (e.g., 'hero-images', 'sevas', 'gallery')
  * @param {Function} onProgress - Progress callback (percent)
- * @returns {Promise<string>} Download URL
+ * @returns {Promise<string>} Public URL
  */
 export const uploadImage = async (file, path, onProgress = null) => {
     try {
@@ -108,45 +116,46 @@ export const uploadImage = async (file, path, onProgress = null) => {
         // Generate unique filename
         const timestamp = Date.now();
         const randomString = Math.random().toString(36).substring(7);
-        const extension = file.name.split(".").pop();
+        const extension = "jpg"; // Always use jpg since we compress to JPEG
         const filename = `${timestamp}_${randomString}.${extension}`;
+        const key = `${path}/${filename}`;
 
-        // Create storage reference
-        const storageRef = ref(storage, `${path}/${filename}`);
+        console.log("Uploading to Cloudflare R2...");
 
-        // Upload file
-        console.log("Uploading to Firebase Storage...");
-        const uploadTask = uploadBytesResumable(storageRef, compressedBlob);
+        // Convert blob to Uint8Array for upload
+        const arrayBuffer = await compressedBlob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
 
-        return new Promise((resolve, reject) => {
-            uploadTask.on(
-                "state_changed",
-                (snapshot) => {
-                    // Progress tracking
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    console.log(`Upload progress: ${progress.toFixed(2)}%`);
-
-                    if (onProgress) {
-                        onProgress(progress);
-                    }
-                },
-                (error) => {
-                    // Error handling
-                    console.error("Upload error:", error);
-                    reject(error);
-                },
-                async () => {
-                    // Upload completed successfully
-                    try {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        console.log("Upload successful! URL:", downloadURL);
-                        resolve(downloadURL);
-                    } catch (error) {
-                        reject(error);
-                    }
-                }
-            );
+        // Upload to R2 using multipart upload for progress tracking
+        const upload = new Upload({
+            client: r2Client,
+            params: {
+                Bucket: BUCKET_NAME,
+                Key: key,
+                Body: uint8Array,
+                ContentType: "image/jpeg",
+            },
         });
+
+        // Track progress
+        upload.on("httpUploadProgress", (progress) => {
+            if (progress.loaded && progress.total) {
+                const percent = (progress.loaded / progress.total) * 100;
+                console.log(`Upload progress: ${percent.toFixed(2)}%`);
+                if (onProgress) {
+                    onProgress(percent);
+                }
+            }
+        });
+
+        // Wait for upload to complete
+        await upload.done();
+
+        // Construct public URL
+        const publicUrl = `${PUBLIC_URL}/${key}`;
+        console.log("Upload successful! URL:", publicUrl);
+
+        return publicUrl;
     } catch (error) {
         console.error("Error in uploadImage:", error);
         throw error;
@@ -154,8 +163,8 @@ export const uploadImage = async (file, path, onProgress = null) => {
 };
 
 /**
- * Delete image from Firebase Storage
- * @param {string} imageUrl - Full download URL of the image
+ * Delete image from Cloudflare R2
+ * @param {string} imageUrl - Full public URL of the image
  * @returns {Promise<boolean>} Success status
  */
 export const deleteImage = async (imageUrl) => {
@@ -164,22 +173,25 @@ export const deleteImage = async (imageUrl) => {
             return false;
         }
 
-        // Extract path from URL
-        // URL format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token={token}
-        const urlParts = imageUrl.split("/o/");
-        if (urlParts.length < 2) {
-            console.error("Invalid Firebase Storage URL");
+        // Extract key from public URL
+        // URL format: https://pub-xxx.r2.dev/path/filename.jpg
+        const urlObj = new URL(imageUrl);
+        const key = urlObj.pathname.substring(1); // Remove leading slash
+
+        if (!key) {
+            console.error("Invalid R2 URL");
             return false;
         }
 
-        const pathWithToken = urlParts[1];
-        const path = decodeURIComponent(pathWithToken.split("?")[0]);
+        // Delete from R2
+        const command = new DeleteObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key,
+        });
 
-        // Create reference and delete
-        const imageRef = ref(storage, path);
-        await deleteObject(imageRef);
+        await r2Client.send(command);
 
-        console.log("Image deleted successfully:", path);
+        console.log("Image deleted successfully:", key);
         return true;
     } catch (error) {
         console.error("Error deleting image:", error);
@@ -194,7 +206,7 @@ export const deleteImage = async (imageUrl) => {
  * @param {FileList|Array} files - Files to upload
  * @param {string} path - Storage path
  * @param {Function} onProgress - Progress callback
- * @returns {Promise<Array<string>>} Array of download URLs
+ * @returns {Promise<Array<string>>} Array of public URLs
  */
 export const uploadMultipleImages = async (files, path, onProgress = null) => {
     const uploadPromises = Array.from(files).map((file, index) => {

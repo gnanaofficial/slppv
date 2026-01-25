@@ -17,7 +17,7 @@ const AdminLogin = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/admin");
+      navigate("/temple-management");
     } catch (err) {
       console.error("Login error:", err);
 
@@ -88,27 +88,14 @@ const AdminLogin = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full px-4 py-3 font-bold text-white rounded-lg ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-mainColor hover:bg-red-700"
-            } transition shadow-lg`}
+            className={`w-full px-4 py-3 font-bold text-white rounded-lg ${loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-mainColor hover:bg-red-700"
+              } transition shadow-lg`}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-
-        <div className="pt-4 border-t border-gray-200">
-          <p className="text-center text-sm text-gray-600">
-            Don't have an admin account?
-          </p>
-          <Link
-            to="/admin/setup"
-            className="block mt-2 text-center text-mainColor hover:underline font-semibold"
-          >
-            Create Admin Account →
-          </Link>
-        </div>
       </div>
     </div>
   );

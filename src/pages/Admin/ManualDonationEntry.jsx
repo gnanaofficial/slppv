@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import Select from "react-select";
 import {
   getAllDonors,
   createDonor,
@@ -73,8 +74,22 @@ const ManualDonationEntry = () => {
     }
   };
 
-  const handleDonorSelection = (e) => {
-    const donorId = e.target.value;
+  const handleDonorSelection = (selectedOption) => {
+    if (!selectedOption) {
+      // Clear selection
+      setIsNewDonor(false);
+      setFormData((prev) => ({
+        ...prev,
+        selectedDonorId: "",
+        donorName: "",
+        donorEmail: "",
+        donorPhone: "",
+        donorAddress: "",
+      }));
+      return;
+    }
+
+    const donorId = selectedOption.value;
 
     if (donorId === "new") {
       setIsNewDonor(true);
@@ -270,7 +285,7 @@ const ManualDonationEntry = () => {
           </p>
         </div>
         <button
-          onClick={() => navigate("/admin/donors")}
+          onClick={() => navigate("/temple-management/donors")}
           className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold"
         >
           ← Back to Donors
@@ -289,19 +304,66 @@ const ManualDonationEntry = () => {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Select Donor *
             </label>
-            <select
-              value={isNewDonor ? "new" : formData.selectedDonorId}
+            <Select
+              value={
+                isNewDonor
+                  ? { value: "new", label: "+ Create New Donor" }
+                  : formData.selectedDonorId
+                    ? {
+                      value: formData.selectedDonorId,
+                      label: donors.find((d) => d.id === formData.selectedDonorId)
+                        ? `${donors.find((d) => d.id === formData.selectedDonorId).name} - ${donors.find((d) => d.id === formData.selectedDonorId).donorId
+                        } (${donors.find((d) => d.id === formData.selectedDonorId).email})`
+                        : "",
+                    }
+                    : null
+              }
               onChange={handleDonorSelection}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-mainColor focus:outline-none"
-            >
-              <option value="">-- Select Existing Donor --</option>
-              {donors.map((donor) => (
-                <option key={donor.id} value={donor.id}>
-                  {donor.name} - {donor.donorId} ({donor.email})
-                </option>
-              ))}
-              <option value="new">+ Create New Donor</option>
-            </select>
+              options={[
+                ...donors.map((donor) => ({
+                  value: donor.id,
+                  label: `${donor.name} - ${donor.donorId} (${donor.email})`,
+                  donor: donor, // Store full donor object for easy access
+                })),
+                { value: "new", label: "+ Create New Donor" },
+              ]}
+              placeholder="🔍 Search or select donor..."
+              isClearable
+              isSearchable
+              className="react-select-container"
+              classNamePrefix="react-select"
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  borderColor: state.isFocused ? "#C62828" : "#D1D5DB",
+                  borderWidth: "2px",
+                  borderRadius: "0.5rem",
+                  padding: "0.5rem",
+                  boxShadow: state.isFocused ? "0 0 0 1px #C62828" : "none",
+                  "&:hover": {
+                    borderColor: "#C62828",
+                  },
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isSelected
+                    ? "#C62828"
+                    : state.isFocused
+                      ? "#FEE2E2"
+                      : "white",
+                  color: state.isSelected ? "white" : "#1F2937",
+                  cursor: "pointer",
+                  "&:active": {
+                    backgroundColor: "#C62828",
+                  },
+                }),
+                placeholder: (base) => ({
+                  ...base,
+                  color: "#9CA3AF",
+                }),
+              }}
+              noOptionsMessage={() => "No donors found"}
+            />
             {errors.selectedDonorId && (
               <p className="text-red-600 text-sm mt-1">
                 {errors.selectedDonorId}
@@ -504,7 +566,7 @@ const ManualDonationEntry = () => {
         <div className="flex justify-end gap-4">
           <button
             type="button"
-            onClick={() => navigate("/admin/donors")}
+            onClick={() => navigate("/temple-management/donors")}
             className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition font-semibold"
           >
             Cancel
@@ -512,11 +574,10 @@ const ManualDonationEntry = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`px-6 py-3 rounded-lg text-white font-semibold transition ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-mainColor hover:bg-red-700"
-            }`}
+            className={`px-6 py-3 rounded-lg text-white font-semibold transition ${loading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-mainColor hover:bg-red-700"
+              }`}
           >
             {loading ? "Recording..." : "Record Donation & Generate Invoice"}
           </button>
