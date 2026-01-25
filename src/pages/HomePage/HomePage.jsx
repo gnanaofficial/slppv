@@ -5,8 +5,8 @@ import Gallary from "../../components/sections/Gallary/Gallary";
 import ResearchPage from "../../components/sections/ResearchPage/ResearchPage";
 import SEO from "../../components/common/SEO";
 import Reveal from "../../components/common/Reveal";
-
 import EventPopup from "../../components/common/EventPopup";
+import MapSection from "../../components/sections/MapSection/MapSection";
 
 const HomePage = () => {
   return (
@@ -26,7 +26,7 @@ const HomePage = () => {
           <Gallary />
         </Reveal>
         <Reveal width="100%">
-          <ResearchPage />
+          <MapSection />
         </Reveal>
       </div>
     </>

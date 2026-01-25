@@ -13,6 +13,7 @@ import {
   onSnapshot,
   serverTimestamp,
   writeBatch,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
 
@@ -480,11 +481,15 @@ export const getSiteContent = async (contentId) => {
 export const updateSiteContent = async (contentId, data, updatedBy) => {
   try {
     const docRef = doc(db, "siteContent", contentId);
-    await updateDoc(docRef, {
-      ...data,
-      updatedAt: serverTimestamp(),
-      updatedBy,
-    });
+    await setDoc(
+      docRef,
+      {
+        ...data,
+        updatedAt: serverTimestamp(),
+        updatedBy,
+      },
+      { merge: true },
+    );
     return true;
   } catch (error) {
     console.error("Error updating site content:", error);

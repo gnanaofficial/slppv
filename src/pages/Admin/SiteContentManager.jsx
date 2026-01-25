@@ -4,6 +4,7 @@ import { useAdmin } from "../../context/AdminContext";
 import { uploadImage, deleteFile } from "../../lib/cloudflareService";
 import { getSiteContent, updateSiteContent } from "../../lib/firestoreService";
 import toast from "react-hot-toast";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
 import { FiUpload, FiTrash2, FiEye, FiEyeOff, FiSave } from "react-icons/fi";
 
 const SiteContentManager = () => {
@@ -28,6 +29,13 @@ const SiteContentManager = () => {
   });
   const [newPopupFile, setNewPopupFile] = useState(null);
   const [isUploadingPopup, setIsUploadingPopup] = useState(false);
+
+  // Delete Modal State
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    type: null, // 'hero' or 'popup'
+    item: null, // item data to delete
+  });
 
   useEffect(() => {
     fetchContent();
@@ -110,8 +118,17 @@ const SiteContentManager = () => {
     }
   };
 
-  const handleDeleteHeroImage = async (imageToDelete) => {
-    if (!window.confirm("Are you sure you want to delete this image?")) return;
+  const confirmDeleteHeroImage = (image) => {
+    setDeleteModal({
+      isOpen: true,
+      type: "hero",
+      item: image,
+    });
+  };
+
+  const executeDeleteHeroImage = async () => {
+    const imageToDelete = deleteModal.item;
+    if (!imageToDelete) return;
 
     try {
       // Delete from R2 if path exists
@@ -130,6 +147,7 @@ const SiteContentManager = () => {
       );
       setHeroImages(updatedImages);
       toast.success("Image deleted successfully");
+      setDeleteModal({ isOpen: false, type: null, item: null });
     } catch (error) {
       console.error("Error deleting hero image:", error);
       toast.error("Failed to delete image");
@@ -195,6 +213,37 @@ const SiteContentManager = () => {
     } catch (error) {
       console.error("Error toggling popup:", error);
       toast.error("Failed to update status");
+    }
+  };
+
+  const confirmDeletePopupImage = () => {
+    setDeleteModal({
+      isOpen: true,
+      type: "popup",
+      item: popupConfig, // pass current config as item
+    });
+  };
+
+  const executeDeletePopupImage = async () => {
+    try {
+      if (popupConfig.imagePath) {
+        await deleteFile(popupConfig.imagePath);
+      }
+
+      const updatedConfig = {
+        ...popupConfig,
+        imageUrl: "",
+        imagePath: "",
+        active: false, // Deactivating if no image
+      };
+
+      await updateSiteContent("popup", updatedConfig, adminData.email);
+      setPopupConfig(updatedConfig);
+      toast.success("Popup image deleted");
+      setDeleteModal({ isOpen: false, type: null, item: null });
+    } catch (error) {
+      console.error("Error deleting popup image:", error);
+      toast.error("Failed to delete popup image");
     }
   };
 
@@ -297,7 +346,7 @@ const SiteContentManager = () => {
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
-                      onClick={() => handleDeleteHeroImage(img)}
+                      onClick={() => confirmDeleteHeroImage(img)}
                       className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transform hover:scale-110 transition"
                       title="Delete Image"
                     >
@@ -388,13 +437,13 @@ const SiteContentManager = () => {
                 </div>
               </div>
 
-              {/* Preview */}
+              {/* Preview with Delete Option */}
               {(popupConfig.imageUrl || newPopupFile) && (
-                <div className="mt-4">
-                  <p className="text-sm font-semibold text-gray-600 mb-2">
+                <div className="mt-4 relative group w-fit mx-auto">
+                  <p className="text-sm font-semibold text-gray-600 mb-2 text-left">
                     Preview:
                   </p>
-                  <div className="w-full max-w-xs mx-auto border-4 border-gray-800 rounded-lg overflow-hidden shadow-xl">
+                  <div className="w-full max-w-xs mx-auto border-4 border-gray-800 rounded-lg overflow-hidden shadow-xl relative">
                     <img
                       src={
                         newPopupFile
@@ -404,6 +453,17 @@ const SiteContentManager = () => {
                       alt="Popup Preview"
                       className="w-full h-auto"
                     />
+                    {!newPopupFile && popupConfig.imageUrl && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          onClick={confirmDeletePopupImage}
+                          className="p-3 bg-red-600 text-white rounded-full hover:bg-red-700 transform hover:scale-110 transition shadow-lg"
+                          title="Delete Popup Image"
+                        >
+                          <FiTrash2 size={24} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -430,6 +490,24 @@ const SiteContentManager = () => {
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() =>
+          setDeleteModal({ isOpen: false, type: null, item: null })
+        }
+        onConfirm={
+          deleteModal.type === "hero"
+            ? executeDeleteHeroImage
+            : executeDeletePopupImage
+        }
+        title="Confirm Deletion"
+        message={
+          deleteModal.type === "hero"
+            ? "Are you sure you want to delete this hero image? This action cannot be undone."
+            : "Are you sure you want to delete the popup image? The popup will also be disabled."
+        }
+      />
     </div>
   );
 };

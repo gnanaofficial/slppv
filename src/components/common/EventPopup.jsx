@@ -12,13 +12,31 @@ const EventPopup = () => {
       try {
         const doc = await getSiteContent("popup");
         if (doc && doc.active && doc.imageUrl) {
-          // Check if already seen in this session?
-          // For now, let's show it every time or maybe check sessionStorage
-          const hasSeen = sessionStorage.getItem(`seen_popup_${doc.imageUrl}`);
+          // Use a unique key that includes the update timestamp or random ID
+          // Fallback to imageUrl if no ID/timestamp is present (shouldn't happen with valid Firestore data)
+          const versionKey = doc.updatedAt?.seconds || doc.id || doc.imageUrl;
+          const storageKey = `seen_popup_${versionKey}`;
+
+          const hasSeen = sessionStorage.getItem(storageKey);
+
+          console.log("[EventPopup] Config:", {
+            active: doc.active,
+            title: doc.title,
+            version: versionKey,
+          });
+          console.log("[EventPopup] Storage Check:", {
+            key: storageKey,
+            hasSeen,
+          });
+
           if (!hasSeen) {
-            setPopupData(doc);
+            setPopupData({ ...doc, storageKey });
             setIsOpen(true);
+          } else {
+            console.log("[EventPopup] Skipped: Already seen in this session");
           }
+        } else {
+          console.log("[EventPopup] Inactive or missing config");
         }
       } catch (error) {
         console.error("Error checking popup:", error);
@@ -32,8 +50,12 @@ const EventPopup = () => {
 
   const handleClose = () => {
     setIsOpen(false);
-    if (popupData) {
-      sessionStorage.setItem(`seen_popup_${popupData.imageUrl}`, "true");
+    if (popupData && popupData.storageKey) {
+      sessionStorage.setItem(popupData.storageKey, "true");
+      console.log(
+        "[EventPopup] Closed and saved to storage:",
+        popupData.storageKey,
+      );
     }
   };
 

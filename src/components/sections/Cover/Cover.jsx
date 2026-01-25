@@ -2,22 +2,11 @@ import React, { useState, useEffect } from "react";
 import vectorImg from "@/assets/Vector.png";
 import { assets } from "@/assets/assets";
 import { getSiteContent } from "@/lib/firestoreService";
-
-// Default images as fallback
-import Img1 from "@/assets/Cover/img1.png";
-import Img2 from "@/assets/Cover/img2.png";
-import Img3 from "@/assets/Cover/img3.png";
-import Img4 from "@/assets/Cover/img4.png";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Cover = () => {
-  const [carouselImages, setCarouselImages] = useState([
-    Img1,
-    Img2,
-    Img3,
-    Img4,
-  ]);
+  const [carouselImages, setCarouselImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     const fetchDynamicImages = async () => {
@@ -25,7 +14,7 @@ const Cover = () => {
         const heroDoc = await getSiteContent("hero");
         if (heroDoc && heroDoc.images && heroDoc.images.length > 0) {
           // Extract URLs from image objects
-          const dynamicUrls = heroDoc.images.map((img) => img.url);
+          const dynamicUrls = heroDoc.images.map((img) => img.url.trim());
           setCarouselImages(dynamicUrls);
         }
       } catch (error) {
@@ -40,19 +29,11 @@ const Cover = () => {
     // Only start interval if we have images
     if (carouselImages.length <= 1) return;
 
-    const transitionDuration = 1000;
-    const displayDuration = 3000;
-
     const intervalId = setInterval(() => {
-      setIsTransitioning(true);
-
-      setTimeout(() => {
-        setCurrentImageIndex(
-          (prevIndex) => (prevIndex + 1) % carouselImages.length,
-        );
-        setIsTransitioning(false);
-      }, transitionDuration);
-    }, transitionDuration + displayDuration);
+      setCurrentImageIndex(
+        (prevIndex) => (prevIndex + 1) % carouselImages.length,
+      );
+    }, 5000); // 5 seconds per slide (includes transition time)
 
     return () => clearInterval(intervalId);
   }, [carouselImages.length]);
@@ -72,14 +53,25 @@ const Cover = () => {
             src={assets.poster}
             alt=""
           />
-          <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl">
-            <img
-              className={`w-full h-full object-cover transition-opacity duration-1000 ${
-                isTransitioning ? "opacity-0" : "opacity-100"
-              }`}
-              src={carouselImages[currentImageIndex]}
-              alt={`Carousel image ${currentImageIndex + 1}`}
-            />
+          <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl bg-gray-100">
+            <AnimatePresence>
+              {carouselImages.length > 0 ? (
+                <motion.img
+                  key={currentImageIndex}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1 }}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  src={carouselImages[currentImageIndex]}
+                  alt={`Carousel image ${currentImageIndex + 1}`}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  Loading...
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

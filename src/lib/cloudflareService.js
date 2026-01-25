@@ -20,6 +20,7 @@ if (isR2Configured()) {
   r2 = new S3Client({
     region: "auto",
     endpoint: import.meta.env.VITE_R2_ENDPOINT,
+    forcePathStyle: true,
     credentials: {
       accessKeyId: import.meta.env.VITE_R2_ACCESS_KEY_ID,
       secretAccessKey: import.meta.env.VITE_R2_SECRET_ACCESS_KEY,
