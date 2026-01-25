@@ -75,6 +75,11 @@ const Setup = () => {
         createdBy: "system",
       });
 
+      // Initialize default configuration
+      const { initializeDefaultConfig } = await import("../../lib/configService");
+      await initializeDefaultConfig();
+      console.log("Default configuration initialized");
+
       setSuccess(true);
 
       // Redirect to login after 2 seconds
@@ -196,11 +201,10 @@ const Setup = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${
-              loading
+            className={`w-full py-3 px-4 rounded-lg text-white font-semibold ${loading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-mainColor hover:bg-red-700"
-            } transition`}
+              } transition`}
           >
             {loading ? "Creating Account..." : "Create Main Admin"}
           </button>

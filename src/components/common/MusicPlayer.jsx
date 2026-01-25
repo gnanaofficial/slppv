@@ -1,18 +1,49 @@
 import React, { useState, useEffect, useRef } from "react";
-// Using a placeholder devotional sound or user-provided asset if available.
-// For now, using a copyright-free devotional/calm instrumental.
+import { getSiteSettings } from "../../lib/configService";
+// Fallback to local asset if no URL configured
 import slogan from "../../assets/music/slogan.mp3";
-const AUDIO_URL = slogan;
 
 const MusicPlayer = ({ shouldPlay }) => {
-  const audioRef = useRef(new Audio(AUDIO_URL));
+  const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [musicConfig, setMusicConfig] = useState({
+    enabled: true,
+    volume: 0.5,
+    url: slogan,
+  });
+
+  // Load music configuration from Firestore
+  useEffect(() => {
+    const loadMusicConfig = async () => {
+      try {
+        const settings = await getSiteSettings();
+        setMusicConfig({
+          enabled: settings.musicEnabled ?? true,
+          volume: settings.musicVolume ?? 0.5,
+          url: settings.musicUrl || slogan, // Fallback to local file
+        });
+      } catch (error) {
+        console.error("Error loading music config:", error);
+        // Use defaults on error
+      }
+    };
+
+    loadMusicConfig();
+  }, []);
+
+  // Initialize audio when config is loaded
+  useEffect(() => {
+    if (musicConfig.url) {
+      audioRef.current = new Audio(musicConfig.url);
+      audioRef.current.loop = true;
+      audioRef.current.volume = musicConfig.volume;
+    }
+  }, [musicConfig.url, musicConfig.volume]);
 
   useEffect(() => {
     const audio = audioRef.current;
-    audio.loop = true;
-    audio.volume = 0.5;
+    if (!audio || !musicConfig.enabled) return;
 
     // Check if music was muted before (from localStorage)
     const wasMuted = localStorage.getItem("musicMuted") === "true";
@@ -54,19 +85,24 @@ const MusicPlayer = ({ shouldPlay }) => {
     }
 
     return () => {
-      audio.pause();
+      if (audio) {
+        audio.pause();
+      }
       document.removeEventListener("click", attemptPlay);
     };
-  }, [shouldPlay]);
+  }, [shouldPlay, musicConfig.enabled]);
 
   const toggleMute = () => {
+    if (!audioRef.current) return;
+
     const newMutedState = !isMuted;
     audioRef.current.muted = newMutedState;
     setIsMuted(newMutedState);
     localStorage.setItem("musicMuted", newMutedState.toString());
   };
 
-  if (!shouldPlay) return null;
+  // Don't render if music is disabled or shouldn't play
+  if (!shouldPlay || !musicConfig.enabled) return null;
 
   return (
     <div className="fixed bottom-4 left-4 z-50 flex gap-2">

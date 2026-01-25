@@ -38,6 +38,12 @@ const Seed = lazy(() => import("./pages/Admin/Seed"));
 const SiteContentManager = lazy(
   () => import("./pages/Admin/SiteContentManager"),
 );
+const EmailConfigManager = lazy(
+  () => import("./pages/Admin/EmailConfigManager"),
+);
+const SiteSettingsManager = lazy(
+  () => import("./pages/Admin/SiteSettingsManager"),
+);
 const PaymentStatus = lazy(() => import("./pages/PaymentStatus/PaymentStatus"));
 const Debug = lazy(() => import("./pages/Admin/Debug"));
 const AdminRoute = lazy(() => import("./components/admin/AdminRoute"));
@@ -195,6 +201,8 @@ const AnimatedRoutes = () => {
             <Route path="sevas" element={<SevaManager />} />
             <Route path="seed-data" element={<Seed />} />
             <Route path="site-content" element={<SiteContentManager />} />
+            <Route path="email-config" element={<EmailConfigManager />} />
+            <Route path="site-settings" element={<SiteSettingsManager />} />
             <Route path="debug" element={<Debug />} />
           </Route>
 

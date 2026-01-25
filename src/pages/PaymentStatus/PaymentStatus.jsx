@@ -18,9 +18,36 @@ const PaymentStatus = () => {
     const orderId = searchParams.get("orderId");
 
     // Simulate processing delay for better UX
-    setTimeout(() => {
+    setTimeout(async () => {
       if (paymentStatus === "success" || paymentStatus === "captured") {
         setStatus("success");
+
+        // Send automated emails
+        try {
+          // Get donor info from sessionStorage (set during payment initiation)
+          const donorInfo = JSON.parse(sessionStorage.getItem("paymentCallback") || "{}");
+
+          if (donorInfo.donorEmail) {
+            const { sendDonationEmails } = await import("../../lib/emailService");
+
+            const donationData = {
+              donorName: donorInfo.donorName,
+              donorEmail: donorInfo.donorEmail,
+              amount: parseFloat(amount) || donorInfo.amount,
+              purpose: donorInfo.purpose || "General Donation",
+              donationId: transactionId || orderId,
+              receiptNumber: `SLPPV-${Date.now()}`,
+              date: new Date().toISOString(),
+            };
+
+            // Send both receipt and thank you emails
+            await sendDonationEmails(donationData);
+            console.log("Donation emails sent successfully");
+          }
+        } catch (error) {
+          console.error("Error sending donation emails:", error);
+          // Don't fail the payment status page if email fails
+        }
       } else if (paymentStatus === "failure" || paymentStatus === "failed") {
         setStatus("failure");
       } else if (paymentStatus === "pending") {
@@ -71,9 +98,12 @@ const PaymentStatus = () => {
             <h2 className="text-3xl font-bold text-green-700 font-play mb-4">
               Payment Successful!
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-2">
               Thank you for your generous donation. Your transaction has been
               completed successfully.
+            </p>
+            <p className="text-sm text-green-600 mb-6">
+              📧 A receipt and thank you email has been sent to your registered email address.
             </p>
 
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 text-left max-w-md mx-auto mb-8">
