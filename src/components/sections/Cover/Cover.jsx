@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import vectorImg from "@/assets/Vector.png";
+import chakraLogo from "@/assets/chakra.png";
 import { assets } from "@/assets/assets";
 import { getSiteContent } from "@/lib/firestoreService";
 import { getSiteSettings } from "@/lib/configService";
@@ -77,10 +78,14 @@ const Cover = () => {
           className="w-full flex  md:flex-row items-center justify-evenly align-center my-auto gap-y-6 md:gap-2"
         >
           {/* LEFT SIDE - Static Poster (now dynamic from admin) */}
-          <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl bg-gray-100">
+          <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl">
             {isLoadingPoster ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-mainColor"></div>
+              <div className="w-full h-full flex items-center justify-center bg-gray-50/30">
+                <img
+                  src={chakraLogo}
+                  alt="Loading"
+                  className="w-12 h-12 animate-spin-slow opacity-60"
+                />
               </div>
             ) : (
               <img
@@ -92,7 +97,7 @@ const Cover = () => {
           </div>
 
           {/* RIGHT SIDE - Carousel (existing, working fine) */}
-          <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl bg-gray-100">
+          <div className="w-2/5 md:w-1/4 relative aspect-[3/4] overflow-hidden rounded-3xl">
             <AnimatePresence>
               {carouselImages.length > 0 ? (
                 <motion.img
@@ -106,8 +111,12 @@ const Cover = () => {
                   alt={`Carousel image ${currentImageIndex + 1}`}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  Loading...
+                <div className="w-full h-full flex items-center justify-center bg-gray-50/30">
+                  <img
+                    src={chakraLogo}
+                    alt="Loading"
+                    className="w-12 h-12 animate-spin-slow opacity-60"
+                  />
                 </div>
               )}
             </AnimatePresence>

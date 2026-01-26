@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
+import chakraLogo from "@/assets/chakra.png";
 
 /**
  * Lazy loading image component with Chakra loader animation
@@ -36,26 +37,13 @@ const LazyImage = ({
       {/* Chakra Loader - shown while loading */}
       {!isLoaded && !hasError && (
         <div
-          className={`absolute inset-0 flex items-center justify-center bg-gray-100 ${loaderClassName}`}
+          className={`absolute inset-0 flex items-center justify-center bg-gray-50/30 ${loaderClassName}`}
         >
-          <div className="chakra-loader">
-            <svg
-              className="w-16 h-16 animate-spin"
-              viewBox="0 0 100 100"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                fill="none"
-                stroke="#8B0000"
-                strokeWidth="8"
-                strokeDasharray="70 200"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
+          <img
+            src={chakraLogo}
+            alt="Loading"
+            className="w-12 h-12 animate-spin-slow opacity-60"
+          />
         </div>
       )}
 

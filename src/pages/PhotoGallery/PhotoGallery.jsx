@@ -264,56 +264,60 @@ const Gallery = () => {
           </div>
         ) : (
           <>
-            {/* Grid View */}
+            {/* Masonry Grid View */}
             {viewMode === "grid" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 px-2">
                 {filteredMedia.map((item) => (
                   <div
                     key={item.id}
-                    className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
+                    className="break-inside-avoid mb-4 group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer bg-gray-100"
                     onClick={() => openLightbox(item, item.type)}
                   >
                     {item.type === "image" ? (
                       <LazyImage
                         src={item.url}
                         alt={item.caption?.en || item.fileName}
-                        className="w-full h-64 object-cover transform group-hover:scale-110 transition-transform duration-300"
+                        className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="relative">
+                      <div className="relative w-full">
                         <LazyVideo
                           src={item.url}
-                          className="w-full h-64"
+                          className="w-full h-auto min-h-[200px] object-cover"
                           controls={false}
                           muted
                         />
-                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                          <svg
-                            className="w-16 h-16 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/40 transition-colors">
+                          <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full border border-white/50">
+                            <svg
+                              className="w-8 h-8 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Info Overlay */}
-                    <div className="p-3">
+                    {/* Gradient Overlay - Visible on Hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                       {item.eventTag && (
-                        <span className="inline-block bg-mainColor text-white text-xs px-2 py-1 rounded mb-2">
+                        <span className="self-start bg-[#8B0000] text-white text-xs font-bold px-2 py-1 rounded mb-2 shadow-sm transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75">
                           {item.eventTag}
                         </span>
                       )}
+
+                      <p className="text-white font-semibold text-lg leading-tight transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-100">
+                        {item.caption?.en || item.title?.en || item.fileName}
+                      </p>
+
                       {item.uploadDate && (
-                        <p className="text-xs text-gray-500 mb-1">
+                        <p className="text-gray-300 text-xs mt-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-150">
                           📅 {new Date(item.uploadDate).toLocaleDateString()}
                         </p>
                       )}
-                      <p className="text-sm font-semibold text-gray-800 truncate">
-                        {item.caption?.en || item.title?.en || item.fileName}
-                      </p>
                     </div>
                   </div>
                 ))}
