@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import ScrollToTop from "./components/common/ScrollToTop/ScrollToTop";
 import ScaleWrapper from "./components/ui/ScaleWrapper";
@@ -25,52 +25,13 @@ const App = () => {
   const isAdmin = window.location.pathname.includes("temple-management");
 
   useEffect(() => {
-    const preloadAssets = async () => {
-      const preloadImage = (src) => {
-        return new Promise((resolve, reject) => {
-          const img = new Image();
-          img.src = src;
-          img.onload = resolve;
-          img.onerror = resolve; // Continue even if error
-        });
-      };
+    // Short timeout to allow initial render before showing content
+    // This replaces the complex preloading logic
+    const timer = setTimeout(() => {
+      setAppReady(true);
+    }, 500);
 
-      try {
-        // 1. Preload Static Assets
-        const staticAssets = [sbg1, sbg2, sb3, sbg4, vectorImg, assets.poster];
-        const staticPromises = staticAssets.map(preloadImage);
-
-        // 2. Fetch Dynamic Assets (Hero Images)
-        const settingsPromise = getSiteSettings();
-        const heroContentPromise = getSiteContent("hero");
-
-        const [settings, heroDoc] = await Promise.all([settingsPromise, heroContentPromise]);
-
-        const dynamicPromises = [];
-        // Preload Hero Poster if configured
-        if (settings?.heroPosterImage) {
-          dynamicPromises.push(preloadImage(settings.heroPosterImage));
-        }
-
-        // Preload Hero Carousel Images
-        if (heroDoc?.images?.length > 0) {
-          heroDoc.images.forEach(img => {
-            if (img.url) dynamicPromises.push(preloadImage(img.url));
-          });
-        }
-
-        // Wait for everything
-        await Promise.all([...staticPromises, ...dynamicPromises]);
-
-      } catch (error) {
-        console.error("Preload error:", error);
-      } finally {
-        // Minimum loading time of 2s to show branding, max is waiting for images
-        setTimeout(() => setAppReady(true), 2000);
-      }
-    };
-
-    preloadAssets();
+    return () => clearTimeout(timer);
   }, []);
 
   return (

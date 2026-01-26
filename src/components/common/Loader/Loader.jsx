@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import loaderLogo from "@/assets/chakra.mp4";
+import chakraLogo from "@/assets/chakra.png";
 
 const Loader = ({ isLoading, onFinish }) => {
   const [visible, setVisible] = useState(true);
@@ -10,7 +10,7 @@ const Loader = ({ isLoading, onFinish }) => {
       const timer = setTimeout(() => {
         setVisible(false);
         if (onFinish) onFinish();
-      }, 800); // Wait for fade out animation
+      }, 500); // Shorter fade out
       return () => clearTimeout(timer);
     }
   }, [isLoading, onFinish]);
@@ -19,24 +19,16 @@ const Loader = ({ isLoading, onFinish }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-center items-center transition-opacity duration-800 ease-in-out bg-[#ffad28] ${!isLoading ? "opacity-0" : "opacity-100"
-        }`}
+      className={`fixed inset-0 z-50 flex justify-center items-center transition-opacity duration-500 ease-in-out bg-white/80 backdrop-blur-sm ${
+        !isLoading ? "opacity-0" : "opacity-100"
+      }`}
     >
-      <div className="flex flex-col items-center">
-        <div className="mt-4 relative">
-          <video
-            autoPlay
-            loop
-            muted
-            className="h-auto w-64 xl:w-80"
-            alt="Loading..."
-            src={loaderLogo}
-          />
-        </div>
-
-        <div className="mt-2 lg:mt-4 text-[#8B0000] font-medium text-base animate-pulse text-center">
-          Sri Prasanna Venkateswara Swamy...
-        </div>
+      <div className="relative">
+        <img
+          src={chakraLogo}
+          alt="Loading..."
+          className="w-24 h-24 animate-spin-slow"
+        />
       </div>
     </div>
   );
