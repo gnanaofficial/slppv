@@ -4,7 +4,7 @@ import { useMediaQuery } from "react-responsive";
 const ResponsiveScaleWrapper = ({
   children,
   className = "",
-  mobileScaleRatio = 0.5,
+  mobileScaleRatio = 1, // Disabled scaling (was 0.5)
   breakpoint = 768,
 }) => {
   const containerRef = useRef(null);
@@ -18,7 +18,17 @@ const ResponsiveScaleWrapper = ({
 
   useEffect(() => {
     const handleResponsiveScaling = () => {
-      if (isMobile && containerRef.current && contentRef.current) {
+      // If scaling is disabled (ratio is 1) or not mobile, use natural layout
+      if (!isMobile || mobileScaleRatio === 1) {
+        setScaleState({
+          height: "auto",
+          transform: "none",
+          width: "100%",
+        });
+        return;
+      }
+
+      if (containerRef.current && contentRef.current) {
         // Precise scaling calculation
         const scale = mobileScaleRatio;
 
@@ -34,13 +44,6 @@ const ResponsiveScaleWrapper = ({
           height: `${scaledHeight}px`,
           transform: `scale(${scale})`,
           width: `${100 / scale}%`,
-        });
-      } else {
-        // Reset to full size for non-mobile screens
-        setScaleState({
-          height: "auto",
-          transform: "none",
-          width: "100%",
         });
       }
     };

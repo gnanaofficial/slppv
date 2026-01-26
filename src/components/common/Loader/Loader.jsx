@@ -1,24 +1,26 @@
 import { useEffect, useState } from "react";
 import loaderLogo from "@/assets/chakra.mp4";
 
-const Loader = ({ onFinish }) => {
-  const [opacity, setOpacity] = useState(1);
+const Loader = ({ isLoading, onFinish }) => {
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setOpacity(0);
-      setTimeout(() => {
+    if (!isLoading) {
+      // Start fade out
+      const timer = setTimeout(() => {
+        setVisible(false);
         if (onFinish) onFinish();
-      }, 500);
-    }, 900);
+      }, 800); // Wait for fade out animation
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, onFinish]);
 
-    return () => clearTimeout(timer);
-  }, [onFinish]);
+  if (!visible) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-center items-center transition-opacity duration-300 ease-in-out bg-[#ffad28]"
-      style={{ opacity }}
+      className={`fixed inset-0 z-50 flex justify-center items-center transition-opacity duration-800 ease-in-out bg-[#ffad28] ${!isLoading ? "opacity-0" : "opacity-100"
+        }`}
     >
       <div className="flex flex-col items-center">
         <div className="mt-4 relative">

@@ -6,7 +6,7 @@ import slogan from "../../assets/music/slogan.mp3";
 const MusicPlayer = ({ shouldPlay }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+
   const [musicConfig, setMusicConfig] = useState({
     enabled: true,
     volume: 0.5,
@@ -45,12 +45,8 @@ const MusicPlayer = ({ shouldPlay }) => {
     const audio = audioRef.current;
     if (!audio || !musicConfig.enabled) return;
 
-    // Check if music was muted before (from localStorage)
-    const wasMuted = localStorage.getItem("musicMuted") === "true";
-    setIsMuted(wasMuted);
-    audio.muted = wasMuted;
-
-    const attemptPlay = () => {
+    // Reset muted state to ensure sound plays when playing
+    audio.muted = false; const attemptPlay = () => {
       audio
         .play()
         .then(() => {
@@ -92,13 +88,18 @@ const MusicPlayer = ({ shouldPlay }) => {
     };
   }, [shouldPlay, musicConfig.enabled]);
 
-  const toggleMute = () => {
+  const togglePlay = () => {
     if (!audioRef.current) return;
 
-    const newMutedState = !isMuted;
-    audioRef.current.muted = newMutedState;
-    setIsMuted(newMutedState);
-    localStorage.setItem("musicMuted", newMutedState.toString());
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      localStorage.setItem("musicPlaying", "false");
+    } else {
+      audioRef.current.play().catch(e => console.error("Play failed:", e));
+      setIsPlaying(true);
+      localStorage.setItem("musicPlaying", "true");
+    }
   };
 
   // Don't render if music is disabled or shouldn't play
@@ -107,17 +108,17 @@ const MusicPlayer = ({ shouldPlay }) => {
   return (
     <div className="fixed bottom-4 left-4 z-50 flex gap-2">
       <button
-        onClick={toggleMute}
+        onClick={togglePlay}
         className="bg-mainColor text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition"
-        title={isMuted ? "Unmute" : "Mute"}
+        title={isPlaying ? "Stop Music" : "Play Music"}
       >
-        {isMuted ? (
-          <span role="img" aria-label="muted">
-            🔇
+        {isPlaying ? (
+          <span role="img" aria-label="playing">
+            🔊
           </span>
         ) : (
-          <span role="img" aria-label="unmuted">
-            🔊
+          <span role="img" aria-label="stopped">
+            🔇
           </span>
         )}
       </button>

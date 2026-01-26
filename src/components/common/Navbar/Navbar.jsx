@@ -13,10 +13,21 @@ import {
   MenuItem,
   Divider,
   Typography,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  Collapse,
+  ListItemIcon,
 } from "@mui/material";
 
 import ammavaru from "@/assets/Cover/ammavaruHeader.png";
 import HomeIcon from "@mui/icons-material/Home";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import bannerImg from "@/assets/banner.png";
 import LanguageToggle from "../LanguageToggle";
@@ -33,6 +44,11 @@ const Navbar = () => {
   const [openSevasMenu, setOpenSevasMenu] = useState(false);
   const [activeItem, setActiveItem] = useState(null);
   const sevasAnchorRef = useRef(null);
+
+  // Mobile Menu State
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSevasOpen, setMobileSevasOpen] = useState(false);
+
 
   const theme = createTheme({
     breakpoints: {
@@ -185,6 +201,79 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleMobileSevasClick = (e) => {
+    e.stopPropagation();
+    setMobileSevasOpen(!mobileSevasOpen);
+  };
+
+  const drawer = (
+    <Box sx={{ width: 250, bgcolor: "#8B0000", height: "100%", color: "white" }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
+        <IconButton onClick={handleDrawerToggle} sx={{ color: "white" }}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.2)" }} />
+      <List>
+        {navItems.map((item) => (
+          <React.Fragment key={item.id}>
+            <ListItemButton
+              onClick={(e) => {
+                if (item.hasSubmenu) {
+                  handleMobileSevasClick(e);
+                } else {
+                  handleNavigation(item);
+                  setMobileOpen(false);
+                }
+              }}
+              sx={{
+                bgcolor: activeItem === item.id ? "rgba(0,0,0,0.2)" : "transparent"
+              }}
+            >
+              {item.icon && <ListItemIcon sx={{ color: "white", minWidth: 40 }}>{item.icon}</ListItemIcon>}
+              <ListItemText primary={item.text} />
+              {item.hasSubmenu ? (mobileSevasOpen ? <ExpandLess /> : <ExpandMore />) : null}
+            </ListItemButton>
+
+            {item.hasSubmenu && (
+              <Collapse in={mobileSevasOpen} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding sx={{ bgcolor: "rgba(0,0,0,0.1)" }}>
+                  {sevasSubmenuGroups[0].items.map((subItem) => (
+                    <ListItemButton
+                      key={subItem.id}
+                      sx={{ pl: 4 }}
+                      onClick={() => {
+                        handleSevasSubmenuItem(subItem.path);
+                        setMobileOpen(false);
+                      }}
+                    >
+                      <ListItemText primary={subItem.text} primaryTypographyProps={{ fontSize: '0.9rem' }} />
+                    </ListItemButton>
+                  ))}
+                  <ListItemButton
+                    sx={{ pl: 4, bgcolor: "rgba(0,0,0,0.2)" }}
+                    onClick={() => {
+                      handleSevasSubmenuItem("/sevas/booking");
+                      setMobileOpen(false);
+                    }}
+                  >
+                    <ListItemText primary="Book a Seva Online" primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 'bold' }} />
+                  </ListItemButton>
+                </List>
+              </Collapse>
+            )}
+            <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+          </React.Fragment>
+        ))}
+      </List>
+    </Box>
+  );
+
+
   return (
     <div className="mt-3 mb-4 md:mt-6 md:mb-6">
       <img
@@ -193,7 +282,7 @@ const Navbar = () => {
       />
 
       {/* Language Toggle and Donor Login */}
-      <div className="flex justify-end items-center gap-3 px-4 md:px-8 py-2">
+      <div className="hidden md:flex justify-end items-center gap-3 px-4 md:px-8 py-2">
         {isAuthenticated ? (
           <div className="flex items-center gap-2">
             <Button
@@ -263,13 +352,54 @@ const Navbar = () => {
         }}
       >
         <Container maxWidth="lg">
-          <div className="h-10 px-0 flex justify-center">
+          <div className="h-10 px-0 flex justify-center items-center">
+
+            {/* Mobile Menu Icon - Visible on XS/SM, Hidden on MD+ */}
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, width: '100%', justifyContent: 'space-between', alignItems: 'center', pl: 1, pr: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <IconButton
+                  color="inherit"
+                  aria-label="open drawer"
+                  edge="start"
+                  onClick={handleDrawerToggle}
+                >
+                  <MenuIcon />
+                </IconButton>
+                <Typography variant="h6" sx={{ ml: 1, fontSize: '1rem', fontWeight: 'bold' }}>
+                  MENU
+                </Typography>
+              </Box>
+
+              {/* Mobile Right Side Controls */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {isAuthenticated ? (
+                  <IconButton
+                    onClick={() => navigate("/donor/dashboard")}
+                    sx={{ color: "white" }}
+                  >
+                    <PersonIcon />
+                  </IconButton>
+                ) : (
+                  <IconButton
+                    onClick={() => navigate("/donor/login")}
+                    sx={{ color: "white" }}
+                  >
+                    <PersonIcon />
+                  </IconButton>
+                )}
+
+                <LanguageToggle className="!bg-transparent !shadow-none !p-1 !text-white hover:!bg-white/10" />
+              </Box>
+            </Box>
+
+            {/* Desktop Menu - Hidden on XS/SM, Visible on MD+ */}
             <Box
               sx={{
-                display: "flex",
-                width: { xs: "100%", sm: "90%", md: "80%", lg: "60%" },
+                display: { xs: "none", md: "flex" },
+                width: { md: "80%", lg: "60%" },
                 height: "100%",
-                overflowX: { xs: "auto", md: "visible" },
+                overflowX: "visible",
+                justifyContent: "center"
               }}
             >
               {navItems.map((item) => (
@@ -289,9 +419,9 @@ const Navbar = () => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: { xs: "12px", sm: "14px", md: "15px" },
+                    fontSize: { sm: "14px", md: "15px" },
                     textTransform: "none",
-                    padding: { xs: "0 8px", sm: "0 12px", md: "0 15px" },
+                    padding: { sm: "0 12px", md: "0 15px" },
                     borderRadius: 0,
                     borderRight: "2px solid #FAAC2F",
                     fontWeight: item.isHighlighted ? "bold" : "normal",
@@ -404,6 +534,22 @@ const Navbar = () => {
           </div>
         </Container>
       </AppBar>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile.
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 250, bgcolor: "#8B0000" },
+        }}
+      >
+        {drawer}
+      </Drawer>
     </div>
   );
 };

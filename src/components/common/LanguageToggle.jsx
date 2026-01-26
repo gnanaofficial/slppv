@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 
-const LanguageToggle = () => {
+const LanguageToggle = ({ className = "" }) => {
   const { i18n } = useTranslation();
 
   const toggleLanguage = () => {
@@ -14,7 +14,7 @@ const LanguageToggle = () => {
   return (
     <button
       onClick={toggleLanguage}
-      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-mainColor text-white hover:bg-red-700 transition-all duration-300 shadow-md"
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-mainColor text-white hover:bg-red-700 transition-all duration-300 shadow-md ${className}`}
       title={currentLang === "en" ? "Switch to Telugu" : "Switch to English"}
     >
       <span className="text-sm font-semibold">

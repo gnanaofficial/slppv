@@ -46,30 +46,7 @@ const defaultSevaItems = [
 const Seva = () => {
   const [sevaItems, setSevaItems] = useState(defaultSevaItems);
 
-  useEffect(() => {
-    const fetchSevas = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "sevas"));
-        if (!querySnapshot.empty) {
-          const fetchedItems = querySnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              // Map DB fields to UI fields if necessary, or ensure DB matches UI
-              path: data.path || data.query_path,
-            };
-          });
-          // Sort by ID or title if needed? For now simple fetch.
-          setSevaItems(fetchedItems);
-        }
-      } catch (error) {
-        console.error("Error fetching dynamic sevas:", error);
-      }
-    };
 
-    fetchSevas();
-  }, []);
 
   return (
     <div id="sevas" className=" h-full w-full mt-12 xl:mt-24">
@@ -104,17 +81,17 @@ const Seva = () => {
         ))}
       </div>
 
-      <div className="relative manVam sm:hidden flex  items-center justify-center gap-2 my-12 w-full px-4">
+      <div className="relative manaVam sm:hidden flex flex-col items-center justify-center gap-6 my-12 w-full px-4">
         {sevaItems.map((item) => (
-          <div key={item.id}>
+          <div key={item.id} className="w-full max-w-[250px]">
             <Link to={item.path}>
-              <div className="flex flex-col items-center mx-auto">
+              <div className="flex flex-col items-center mx-auto w-full">
                 <div
-                  className={`hover:translate-y-[-12px] min-h-[250px] min-w-[150px] ${item.bgClass} bg-cover bg-center relative transition-all duration-[0.3s] ease-in-out p-1 cursor-pointer`}
+                  className={`hover:translate-y-[-12px] min-h-[200px] w-full ${item.bgClass} bg-cover bg-center relative transition-all duration-[0.3s] ease-in-out p-1 cursor-pointer rounded-lg shadow-md`}
                 >
-                  <div className="text-white absolute bottom-2 h-[80px] overflow-scroll p-1 ">
-                    <h1 className="font-montserrat font-bold">{item.title}</h1>
-                    <p className="mt-2 font-medium text-[13px] font-montserrat  text-white/80">
+                  <div className="text-white absolute bottom-2 w-full p-3 bg-black/30 rounded-b-lg">
+                    <h1 className="font-montserrat font-bold text-lg">{item.title}</h1>
+                    <p className="mt-1 font-medium text-xs font-montserrat text-white/90">
                       {item.description}
                     </p>
                   </div>
