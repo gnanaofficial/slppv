@@ -8,8 +8,13 @@ import {
   deleteAdmin,
 } from "../../lib/firestoreService";
 import { formatDateTime } from "../../utils/donorUtils";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../lib/firebase";
+import { initializeApp, deleteApp } from "firebase/app";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { auth, firebaseConfig } from "../../lib/firebase";
 
 const SubAdminManager = () => {
   const { adminData } = useAdmin();
@@ -86,22 +91,43 @@ const SubAdminManager = () => {
       return;
     }
 
+    let secondaryApp = null;
+
     try {
-      // Create Firebase Auth account
+      setLoading(true);
+
+      // 1. Initialize a secondary firebase app to create the user
+      // Using a unique name prevents conflicts
+      const appName = `secondaryApp-${Date.now()}`;
+      secondaryApp = initializeApp(firebaseConfig, appName);
+      const secondaryAuth = getAuth(secondaryApp);
+
+      // 2. Create the user in Firebase Auth using the secondary app
+      console.log("Creating user in Auth...");
       const userCredential = await createUserWithEmailAndPassword(
-        auth,
+        secondaryAuth,
         formData.email,
         formData.password,
       );
+      const uid = userCredential.user.uid;
+      console.log("User created in Auth with UID:", uid);
 
-      // Create admin record
-      await createAdmin({
+      // 3. Immediately sign out the new user from the secondary app
+      await signOut(secondaryAuth);
+      console.log("Secondary user signed out.");
+
+      // 4. Create admin record in Firestore
+      console.log("Creating admin record in Firestore...");
+      const newAdmin = {
         name: formData.name,
         email: formData.email,
         role: formData.role,
         permissions: formData.permissions,
-        uid: userCredential.user.uid,
-      });
+        uid: uid,
+      };
+
+      await createAdmin(newAdmin);
+      console.log("Admin record created in Firestore successfully.");
 
       toast.success("Sub-admin created successfully");
       setShowAddModal(false);
@@ -112,14 +138,28 @@ const SubAdminManager = () => {
         role: "sub_admin",
         permissions: [],
       });
-      fetchAdmins();
+
+      // Refresh list
+      await fetchAdmins();
     } catch (error) {
       console.error("Error creating admin:", error);
       if (error.code === "auth/email-already-in-use") {
-        toast.error("Email already in use");
+        toast.error(
+          "This email is already registered. Please use a DIFFERENT email address.",
+        );
       } else {
-        toast.error("Failed to create sub-admin");
+        toast.error("Failed to create: " + error.message);
       }
+    } finally {
+      // 5. Cleanup the secondary app
+      if (secondaryApp) {
+        try {
+          await deleteApp(secondaryApp);
+        } catch (cleanupError) {
+          console.error("Error cleaning up secondary app:", cleanupError);
+        }
+      }
+      setLoading(false);
     }
   };
 
@@ -144,10 +184,9 @@ const SubAdminManager = () => {
       // Note: Password update requires Firebase Admin SDK on backend
       // For now, we'll show a message that password reset email will be sent
       if (formData.password) {
-        toast.success(
-          "Sub-admin updated! Password will be reset via email.",
-          { duration: 4000 }
-        );
+        toast.success("Sub-admin updated! Password will be reset via email.", {
+          duration: 4000,
+        });
       } else {
         toast.success("Sub-admin updated successfully");
       }
@@ -199,7 +238,9 @@ const SubAdminManager = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-3xl font-bold text-mainColor font-play">
-            {adminData?.role === "main_admin" ? "Admin Management" : "Sub-Admin Management"}
+            {adminData?.role === "main_admin"
+              ? "Admin Management"
+              : "Sub-Admin Management"}
           </h2>
           <p className="text-gray-600 mt-1">
             {adminData?.role === "main_admin"
@@ -261,10 +302,11 @@ const SubAdminManager = () => {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${admin.role === "main_admin"
-                        ? "bg-purple-100 text-purple-800"
-                        : "bg-blue-100 text-blue-800"
-                        }`}
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        admin.role === "main_admin"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
                     >
                       {admin.role === "main_admin" ? "Main Admin" : "Sub Admin"}
                     </span>
@@ -277,7 +319,8 @@ const SubAdminManager = () => {
                   </td>
                   <td className="px-4 py-3 text-center">
                     {/* Show edit/delete for sub-admins, or for main admins if current user is also main admin */}
-                    {(admin.role !== "main_admin" || adminData?.role === "main_admin") && (
+                    {(admin.role !== "main_admin" ||
+                      adminData?.role === "main_admin") && (
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => openEditModal(admin)}
@@ -310,7 +353,9 @@ const SubAdminManager = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="bg-mainColor text-white p-6 rounded-t-lg">
               <h3 className="text-2xl font-bold font-play">
-                {adminData?.role === "main_admin" ? "Add New Admin" : "Add New Sub-Admin"}
+                {adminData?.role === "main_admin"
+                  ? "Add New Admin"
+                  : "Add New Sub-Admin"}
               </h3>
             </div>
             <form onSubmit={handleAddAdmin} className="p-6 space-y-4">
@@ -385,7 +430,10 @@ const SubAdminManager = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={Array.isArray(formData.permissions) && formData.permissions.includes(perm.id)}
+                        checked={
+                          Array.isArray(formData.permissions) &&
+                          formData.permissions.includes(perm.id)
+                        }
                         onChange={() => handlePermissionToggle(perm.id)}
                         className="w-4 h-4 text-mainColor"
                       />
@@ -404,9 +452,14 @@ const SubAdminManager = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition font-semibold"
+                  disabled={loading}
+                  className={`px-4 py-2 text-white rounded-lg transition font-semibold ${
+                    loading
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-mainColor hover:bg-red-700"
+                  }`}
                 >
-                  Create Sub-Admin
+                  {loading ? "Creating..." : "Create Sub-Admin"}
                 </button>
               </div>
             </form>
@@ -465,7 +518,8 @@ const SubAdminManager = () => {
                   minLength="8"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  💡 Enter new password only if you want to change it (min 8 characters)
+                  💡 Enter new password only if you want to change it (min 8
+                  characters)
                 </p>
               </div>
               {formData.role !== "main_admin" ? (
@@ -481,7 +535,10 @@ const SubAdminManager = () => {
                       >
                         <input
                           type="checkbox"
-                          checked={Array.isArray(formData.permissions) && formData.permissions.includes(perm.id)}
+                          checked={
+                            Array.isArray(formData.permissions) &&
+                            formData.permissions.includes(perm.id)
+                          }
                           onChange={() => handlePermissionToggle(perm.id)}
                           className="w-4 h-4 text-mainColor"
                         />
