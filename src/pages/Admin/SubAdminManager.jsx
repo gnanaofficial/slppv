@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAdmin } from "../../context/AdminContext";
 import {
@@ -18,6 +19,12 @@ import { auth, firebaseConfig } from "../../lib/firebase";
 
 const SubAdminManager = () => {
   const { adminData } = useAdmin();
+
+  // Strict Access Control: Only Main Admins can access this page
+  if (adminData?.role !== "main" && adminData?.role !== "main_admin") {
+    return <Navigate to="/temple-management" replace />;
+  }
+
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);

@@ -24,10 +24,12 @@ import {
   MdImage,
   MdAccessTime, // Added MdAccessTime for the Clock icon
 } from "react-icons/md";
+import { useAdmin } from "../../context/AdminContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isMainAdmin } = useAdmin();
 
   // Sidebar state - persist in localStorage
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -40,11 +42,13 @@ const Dashboard = () => {
   // Dropdown states
   const [openDropdowns, setOpenDropdowns] = useState(() => {
     const saved = localStorage.getItem("adminDropdowns");
-    return saved !== null ? JSON.parse(saved) : {
-      donors: false,
-      content: false,
-      settings: false,
-    };
+    return saved !== null
+      ? JSON.parse(saved)
+      : {
+          donors: false,
+          content: false,
+          settings: false,
+        };
   });
 
   // Persist sidebar state
@@ -84,15 +88,18 @@ const Dashboard = () => {
 
   // Check if current path matches
   const isActive = (path) => location.pathname === path;
-  const isParentActive = (paths) => paths.some((path) => location.pathname.startsWith(path));
+  const isParentActive = (paths) =>
+    paths.some((path) => location.pathname.startsWith(path));
 
   return (
     <div className="flex h-screen bg-[#FFF5E1] overflow-hidden">
       {/* Sidebar */}
       <aside
-        className={`bg-mainColor text-white fixed inset-y-0 left-0 z-30 transform transition-all duration-300 ease-in-out shadow-2xl border-r-4 border-[#FFD700] ${isSidebarOpen ? "w-64" : "w-20"
-          } ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 lg:static flex flex-col`}
+        className={`bg-mainColor text-white fixed inset-y-0 left-0 z-30 transform transition-all duration-300 ease-in-out shadow-2xl border-r-4 border-[#FFD700] ${
+          isSidebarOpen ? "w-64" : "w-20"
+        } ${
+          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 lg:static flex flex-col`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#8B0000]">
@@ -200,7 +207,12 @@ const Dashboard = () => {
             isOpen={openDropdowns.content}
             onToggle={() => toggleDropdown("content")}
             isCollapsed={!isSidebarOpen}
-            isActive={isParentActive(["/temple-management/hero-images", "/temple-management/gallery-images", "/temple-management/sevas", "/temple-management/site-content"])}
+            isActive={isParentActive([
+              "/temple-management/hero-images",
+              "/temple-management/gallery-images",
+              "/temple-management/sevas",
+              "/temple-management/site-content",
+            ])}
           >
             <NavItem
               to="/temple-management/hero-images"
@@ -243,16 +255,22 @@ const Dashboard = () => {
             isOpen={openDropdowns.settings}
             onToggle={() => toggleDropdown("settings")}
             isCollapsed={!isSidebarOpen}
-            isActive={isParentActive(["/temple-management/sub-admins", "/temple-management/email", "/temple-management/payment"])}
+            isActive={isParentActive([
+              "/temple-management/sub-admins",
+              "/temple-management/email",
+              "/temple-management/payment",
+            ])}
           >
-            <NavItem
-              to="/temple-management/sub-admins"
-              icon={<MdAdminPanelSettings />}
-              label="Sub-Admins"
-              isActive={isActive("/temple-management/sub-admins")}
-              isCollapsed={!isSidebarOpen}
-              isSubItem
-            />
+            {isMainAdmin() && (
+              <NavItem
+                to="/temple-management/sub-admins"
+                icon={<MdAdminPanelSettings />}
+                label="Sub-Admins"
+                isActive={isActive("/temple-management/sub-admins")}
+                isCollapsed={!isSidebarOpen}
+                isSubItem
+              />
+            )}
             <NavItem
               to="/temple-management/email-config"
               icon={<MdEmail />}
@@ -276,8 +294,9 @@ const Dashboard = () => {
         <div className="p-4 border-t border-[#8B0000]">
           <button
             onClick={handleLogout}
-            className={`w-full py-3 px-4 rounded-lg transition-all duration-200 bg-[#FFD700] text-mainColor font-bold hover:bg-yellow-400 flex items-center shadow-md ${isSidebarOpen ? "justify-center gap-2" : "justify-center"
-              }`}
+            className={`w-full py-3 px-4 rounded-lg transition-all duration-200 bg-[#FFD700] text-mainColor font-bold hover:bg-yellow-400 flex items-center shadow-md ${
+              isSidebarOpen ? "justify-center gap-2" : "justify-center"
+            }`}
             title="Logout"
           >
             <MdLogout className="w-5 h-5" />
@@ -322,14 +341,22 @@ const Dashboard = () => {
 };
 
 // NavItem Component
-const NavItem = ({ to, icon, label, isActive, isCollapsed, isSubItem = false }) => {
+const NavItem = ({
+  to,
+  icon,
+  label,
+  isActive,
+  isCollapsed,
+  isSubItem = false,
+}) => {
   return (
     <Link
       to={to}
-      className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${isActive
-        ? "bg-[#8B0000] text-white shadow-lg"
-        : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
-        } ${isSubItem ? "ml-4" : ""} ${isCollapsed ? "justify-center" : ""}`}
+      className={`flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${
+        isActive
+          ? "bg-[#8B0000] text-white shadow-lg"
+          : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
+      } ${isSubItem ? "ml-4" : ""} ${isCollapsed ? "justify-center" : ""}`}
       title={isCollapsed ? label : ""}
     >
       <span className="text-xl flex-shrink-0">{icon}</span>
@@ -339,15 +366,24 @@ const NavItem = ({ to, icon, label, isActive, isCollapsed, isSubItem = false }) 
 };
 
 // DropdownMenu Component
-const DropdownMenu = ({ icon, label, isOpen, onToggle, isCollapsed, isActive, children }) => {
+const DropdownMenu = ({
+  icon,
+  label,
+  isOpen,
+  onToggle,
+  isCollapsed,
+  isActive,
+  children,
+}) => {
   return (
     <div>
       <button
         onClick={onToggle}
-        className={`w-full flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${isActive
-          ? "bg-[#8B0000] bg-opacity-70 text-white"
-          : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
-          } ${isCollapsed ? "justify-center" : "justify-between"}`}
+        className={`w-full flex items-center gap-3 py-3 px-4 rounded-lg transition-all duration-200 ${
+          isActive
+            ? "bg-[#8B0000] bg-opacity-70 text-white"
+            : "hover:bg-[#8B0000] hover:bg-opacity-50 text-white"
+        } ${isCollapsed ? "justify-center" : "justify-between"}`}
         title={isCollapsed ? label : ""}
       >
         <div className="flex items-center gap-3">
