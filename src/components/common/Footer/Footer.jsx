@@ -66,6 +66,14 @@ const Footer = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link
+                    to="/terms-and-conditions"
+                    className="text-sm text-white hover:text-white/80 transition-all duration-100 ease-in-out"
+                  >
+                    Terms & Conditions
+                  </Link>
+                </li>
+                <li>
                   <Link to="/donate" className="inline-block mt-3">
                     <button className="text-white px-8 py-2 bg-gradient-to-r from-[#f2e496] via-[#b3892d] to-[#ba983c] rounded-full hover:from-[#ba983c] hover:to-[#b3892d] transition-all duration-500 ease-in-out">
                       Donate

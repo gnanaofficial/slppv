@@ -79,7 +79,10 @@ const SubAdminManager = () => {
   };
 
   const handleAddAdmin = async (e) => {
-    e.preventDefault();
+    if (adminData?.role !== "main_admin") {
+      toast.error("Only Main Admins can add sub-admins");
+      return;
+    }
 
     if (!formData.name || !formData.email || !formData.password) {
       toast.error("Please fill all required fields");
@@ -248,12 +251,14 @@ const SubAdminManager = () => {
               : "Manage sub-admins and their permissions"}
           </p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition font-semibold"
-        >
-          + Add {adminData?.role === "main_admin" ? "Admin" : "Sub-Admin"}
-        </button>
+        {adminData?.role === "main_admin" && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition font-semibold"
+          >
+            + Add Admin
+          </button>
+        )}
       </div>
 
       {/* Admins Table */}

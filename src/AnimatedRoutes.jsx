@@ -21,6 +21,7 @@ const Booking = lazy(() => import("./pages/Seva/Booking"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Trust = lazy(() => import("./pages/Trust/Trust"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 
 const AdminLogin = lazy(() => import("./pages/Admin/AdminLogin"));
 const Dashboard = lazy(() => import("./pages/Admin/Dashboard"));
@@ -47,9 +48,7 @@ const EmailConfigManager = lazy(
 const SiteSettingsManager = lazy(
   () => import("./pages/Admin/SiteSettingsManager"),
 );
-const HeroImagesManager = lazy(
-  () => import("./pages/Admin/HeroImagesManager"),
-);
+const HeroImagesManager = lazy(() => import("./pages/Admin/HeroImagesManager"));
 const GalleryImagesManager = lazy(
   () => import("./pages/Admin/GalleryImagesManager"),
 );
@@ -106,6 +105,14 @@ const AnimatedRoutes = () => {
             element={
               <Layout>
                 <Trust />
+              </Layout>
+            }
+          />
+          <Route
+            path="/terms-and-conditions"
+            element={
+              <Layout>
+                <TermsAndConditions />
               </Layout>
             }
           />
@@ -223,7 +230,8 @@ const AnimatedRoutes = () => {
             />
             <Route path="donors/history" element={<DonationHistory />} />
             <Route path="donors/deleted" element={<DonorHistory />} />
-            <Route path="donors/history" element={<DonationHistory />} /> {/* Fallback or main */}
+            <Route path="donors/history" element={<DonationHistory />} />{" "}
+            {/* Fallback or main */}
             <Route path="daily-sevas" element={<DailySevasManager />} />
             <Route path="sub-admins" element={<SubAdminManager />} />
             <Route path="hero-images" element={<HeroImagesManager />} />

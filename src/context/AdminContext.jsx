@@ -21,9 +21,10 @@ export const AdminProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-
       if (user) {
+        setLoading(true); // Prevent race condition in AdminRoute
+        setCurrentUser(user);
+
         try {
           // Check if user is admin
           const admin = await getAdminByUid(user.uid);
@@ -45,13 +46,15 @@ export const AdminProvider = ({ children }) => {
           console.error("Error fetching user data:", error);
           setAdminData(null);
           setUserType(null);
+        } finally {
+          setLoading(false);
         }
       } else {
+        setCurrentUser(null);
         setAdminData(null);
         setUserType(null);
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return unsubscribe;
@@ -64,7 +67,8 @@ export const AdminProvider = ({ children }) => {
     if (!adminData || userType !== "admin") return false;
 
     // Main admin has all permissions
-    if (adminData.role === "main") return true;
+    if (adminData.role === "main" || adminData.role === "main_admin")
+      return true;
 
     // Check specific permission for sub-admin
     return adminData.permissions?.[permission] === true;
@@ -74,7 +78,7 @@ export const AdminProvider = ({ children }) => {
    * Check if user is main admin
    */
   const isMainAdmin = () => {
-    return adminData?.role === "main";
+    return adminData?.role === "main" || adminData?.role === "main_admin";
   };
 
   /**
