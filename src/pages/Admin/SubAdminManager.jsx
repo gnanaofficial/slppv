@@ -14,16 +14,19 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   signOut,
+  setPersistence,
+  inMemoryPersistence,
 } from "firebase/auth";
 import { auth, firebaseConfig } from "../../lib/firebase";
 
 const SubAdminManager = () => {
-  const { adminData } = useAdmin();
+  const { adminData, isMainAdmin, hasPermission } = useAdmin();
 
-  // Strict Access Control: Only Main Admins can access this page
-  if (adminData?.role !== "main" && adminData?.role !== "main_admin") {
-    return <Navigate to="/temple-management" replace />;
+  if (!isMainAdmin() && !hasPermission("admins.manage")) {
+    return <Navigate to="/temple-management" />;
   }
+
+  // Allow all admins to view this page, but restrict actions in UI
 
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +52,8 @@ const SubAdminManager = () => {
     { id: "gallery.manage", label: "Manage Gallery" },
     { id: "videos.manage", label: "Manage Videos" },
     { id: "sevas.manage", label: "Manage Sevas" },
+    { id: "admins.manage", label: "Manage Sub-Admins" },
+    { id: "email.config", label: "Manage Email Settings" },
   ];
 
   useEffect(() => {
@@ -86,8 +91,9 @@ const SubAdminManager = () => {
   };
 
   const handleAddAdmin = async (e) => {
-    if (adminData?.role !== "main_admin") {
-      toast.error("Only Main Admins can add sub-admins");
+    e.preventDefault();
+    if (!isMainAdmin() && !hasPermission("admins.manage")) {
+      toast.error("You do not have permission to add sub-admins");
       return;
     }
 
@@ -105,12 +111,18 @@ const SubAdminManager = () => {
 
     try {
       setLoading(true);
+      console.log("Starting Sub-Admin creation...");
 
       // 1. Initialize a secondary firebase app to create the user
       // Using a unique name prevents conflicts
       const appName = `secondaryApp-${Date.now()}`;
+      console.log("Initializing secondary app:", appName);
       secondaryApp = initializeApp(firebaseConfig, appName);
+
+      // Use setPersistence to ensure isolation
       const secondaryAuth = getAuth(secondaryApp);
+      console.log("Setting persistence to memory...");
+      await setPersistence(secondaryAuth, inMemoryPersistence);
 
       // 2. Create the user in Firebase Auth using the secondary app
       console.log("Creating user in Auth...");
@@ -120,14 +132,13 @@ const SubAdminManager = () => {
         formData.password,
       );
       const uid = userCredential.user.uid;
-      console.log("User created in Auth with UID:", uid);
+      console.log("User created with UID:", uid);
 
       // 3. Immediately sign out the new user from the secondary app
       await signOut(secondaryAuth);
-      console.log("Secondary user signed out.");
+      console.log("Signed out from secondary app.");
 
       // 4. Create admin record in Firestore
-      console.log("Creating admin record in Firestore...");
       const newAdmin = {
         name: formData.name,
         email: formData.email,
@@ -136,8 +147,9 @@ const SubAdminManager = () => {
         uid: uid,
       };
 
+      console.log("Creating Firestore record...", newAdmin);
       await createAdmin(newAdmin);
-      console.log("Admin record created in Firestore successfully.");
+      console.log("Firestore record created.");
 
       toast.success("Sub-admin created successfully");
       setShowAddModal(false);
@@ -258,7 +270,7 @@ const SubAdminManager = () => {
               : "Manage sub-admins and their permissions"}
           </p>
         </div>
-        {adminData?.role === "main_admin" && (
+        {(adminData?.role === "main" || adminData?.role === "main_admin") && (
           <button
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-mainColor text-white rounded-lg hover:bg-red-700 transition font-semibold"
@@ -330,8 +342,8 @@ const SubAdminManager = () => {
                     {formatDateTime(admin.createdAt)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {/* Show edit/delete for sub-admins, or for main admins if current user is also main admin */}
-                    {(admin.role !== "main_admin" ||
+                    {/* Show edit/delete ONLY for main admins */}
+                    {(adminData?.role === "main" ||
                       adminData?.role === "main_admin") && (
                       <div className="flex justify-center gap-2">
                         <button
@@ -365,7 +377,7 @@ const SubAdminManager = () => {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="bg-mainColor text-white p-6 rounded-t-lg">
               <h3 className="text-2xl font-bold font-play">
-                {adminData?.role === "main_admin"
+                {adminData?.role === "main_admin" || adminData?.role === "main"
                   ? "Add New Admin"
                   : "Add New Sub-Admin"}
               </h3>
@@ -411,7 +423,8 @@ const SubAdminManager = () => {
                   minLength="8"
                 />
               </div>
-              {adminData?.role === "main_admin" && (
+              {(adminData?.role === "main_admin" ||
+                adminData?.role === "main") && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Role *

@@ -29,7 +29,7 @@ import { useAdmin } from "../../context/AdminContext";
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isMainAdmin } = useAdmin();
+  const { isMainAdmin, hasPermission } = useAdmin();
 
   // Sidebar state - persist in localStorage
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -261,7 +261,7 @@ const Dashboard = () => {
               "/temple-management/payment",
             ])}
           >
-            {isMainAdmin() && (
+            {(isMainAdmin() || hasPermission("admins.manage")) && (
               <NavItem
                 to="/temple-management/sub-admins"
                 icon={<MdAdminPanelSettings />}
@@ -271,14 +271,16 @@ const Dashboard = () => {
                 isSubItem
               />
             )}
-            <NavItem
-              to="/temple-management/email-config"
-              icon={<MdEmail />}
-              label="Email Config"
-              isActive={isActive("/temple-management/email-config")}
-              isCollapsed={!isSidebarOpen}
-              isSubItem
-            />
+            {(isMainAdmin() || hasPermission("email.config")) && (
+              <NavItem
+                to="/temple-management/email-config"
+                icon={<MdEmail />}
+                label="Email Config"
+                isActive={isActive("/temple-management/email-config")}
+                isCollapsed={!isSidebarOpen}
+                isSubItem
+              />
+            )}
             <NavItem
               to="/temple-management/site-settings"
               icon={<MdSettings />}

@@ -71,6 +71,9 @@ export const AdminProvider = ({ children }) => {
       return true;
 
     // Check specific permission for sub-admin
+    if (Array.isArray(adminData.permissions)) {
+      return adminData.permissions.includes(permission);
+    }
     return adminData.permissions?.[permission] === true;
   };
 

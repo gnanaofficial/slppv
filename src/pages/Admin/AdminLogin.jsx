@@ -27,7 +27,11 @@ const AdminLogin = () => {
         err.code === "auth/user-not-found"
       ) {
         setError(
-          "Invalid email or password. Please check your credentials or create an admin account first.",
+          "Invalid credentials. If this is a new account, please verify it was created successfully.",
+        );
+      } else if (err.code === "auth/user-not-found") {
+        setError(
+          "Account not found. Please contact the Main Admin to create your account.",
         );
       } else if (err.code === "auth/wrong-password") {
         setError("Incorrect password. Please try again.");
@@ -88,10 +92,11 @@ const AdminLogin = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full px-4 py-3 font-bold text-white rounded-lg ${loading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-mainColor hover:bg-red-700"
-              } transition shadow-lg`}
+            className={`w-full px-4 py-3 font-bold text-white rounded-lg ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-mainColor hover:bg-red-700"
+            } transition shadow-lg`}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
